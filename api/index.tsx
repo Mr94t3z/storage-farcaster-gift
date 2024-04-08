@@ -5,8 +5,8 @@ import { storageRegistry } from "../lib/contracts.js";
 import fetch from 'node-fetch';
 
 // Uncomment this packages to tested on local server
-import { devtools } from 'frog/dev';
-import { serveStatic } from 'frog/serve-static';
+// import { devtools } from 'frog/dev';
+// import { serveStatic } from 'frog/serve-static';
 
 // Uncomment to use Edge Runtime.
 // export const config = {
@@ -68,11 +68,11 @@ app.frame('/', (c) => {
           whiteSpace: 'pre-wrap',
         }}
       >
-       Let's find people you follow low on storage and gift them storage.
+       Let's find people you follow who are low on storage and gift them additional storage.
       </div>
     ),
     intents: [
-      <Button action="/dashboard">🖱️ Lets Get Started</Button>,
+      <Button action="/dashboard">📌 Lets Get Started</Button>,
     ]
   })
 })
@@ -443,7 +443,7 @@ app.frame('/finish', (c) => {
 
 
 // Uncomment for local server testing
-devtools(app, { serveStatic });
+// devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)
