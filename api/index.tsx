@@ -354,7 +354,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
           </div>
       ),
       intents: [
-        <Button.Transaction target={`/tx-gift/${toFid}`}>💳 Gift Storage</Button.Transaction>,
+        <Button.Transaction target={`/tx-gift/${toFid}`}>💰 Gift Storage</Button.Transaction>,
         <Button action="/">🙅🏻‍♂️ Cancel</Button>,
       ]
     })
