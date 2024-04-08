@@ -215,7 +215,6 @@ app.frame('/show/:fid', async (c) => {
     const links_capacity = extractedData[0].links_capacity;
     const links_used = extractedData[0].links_used;
 
-
     // Calculate index range to display data from API
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, extractedData.length);
@@ -290,9 +289,6 @@ app.frame('/show/:fid', async (c) => {
 
 app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactions_used/:links_capacity/:links_used', async (c) => {
   const { toFid, casts_capacity, casts_used, reactions_capacity, reactions_used, links_capacity, links_used } = c.req.param();
-
-
-  console.log(toFid, casts_capacity);
 
   try {
     const response = await fetch(`${baseUrl}/user/bulk?fids=${toFid}&viewer_fid=${toFid}`, {
