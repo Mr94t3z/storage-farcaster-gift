@@ -170,12 +170,50 @@ app.frame('/show/:fid', async (c) => {
     });
     const followersData = await followersResponse.json();
 
-    // Extract relevant fields from followers data
-    const extractedData = followersData.top_relevant_followers_hydrated.map((item: { user: { fid: any; username: any; pfp_url: any; }; }) => ({
+    // Extract relevant fields from followers data and add total storage left
+    const extractedData = await Promise.all(followersData.top_relevant_followers_hydrated.map(async (item: { user: { fid: any; username: any; pfp_url: any; }; }) => {
+      const fid = item.user.fid;
+      const storageResponse = await fetch(`${baseUrl}/storage/usage?fid=${fid}`, {
+        method: 'GET',
+        headers: {
+          'accept': 'application/json',
+          'api_key': 'NEYNAR_FROG_FM',
+        },
+      });
+    const storageData = await storageResponse.json();
+
+    // Calculate total storage left
+    const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
+    storageData.reactions.capacity - storageData.reactions.used +
+    storageData.links.capacity - storageData.links.used;
+
+    // Return the extracted data with total storage left
+    return {
       fid: item.user.fid,
       username: item.user.username,
       pfp_url: item.user.pfp_url,
+      totalStorageLeft: totalStorageLeft,
+      casts_capacity: storageData.casts.capacity,
+      casts_used: storageData.casts.used,
+      reactions_capacity: storageData.reactions.capacity,
+      reactions_used: storageData.reactions.used,
+      links_capacity: storageData.links.capacity,
+      links_used: storageData.links.used,
+    };
+
     }));
+
+    // Sort the extracted data in ascending order based on total storage left
+    extractedData.sort((a, b) => a.totalStorageLeft - b.totalStorageLeft);
+
+    // Get the storage capacity and used for the current user
+    const casts_capacity = extractedData[0].casts_capacity;
+    const casts_used = extractedData[0].casts_used;
+    const reactions_capacity = extractedData[0].reactions_capacity;
+    const reactions_used = extractedData[0].reactions_used;
+    const links_capacity = extractedData[0].links_capacity;
+    const links_used = extractedData[0].links_used;
+
 
     // Calculate index range to display data from API
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -187,49 +225,8 @@ app.frame('/show/:fid', async (c) => {
     // Limit totalPages to 5
     totalPages = Math.min(totalPages, 5);
 
-    // console.log(extractedData);
-
-    // let minStorageData: { totalStorageLeft: any; fid?: any; storageData?: any; } | null = null; // Initialize minStorageData to null
-    // let toFid: any = null; // Initialize toFid variable
-
-    // // Iterate through each fid and fetch storage data
-    // await Promise.all(extractedData.map(async (user: { fid: any; }) => {
-    //   const userFid = user.fid;
-
-    //   try {
-    //     const storageResponse = await fetch(`https://api.neynar.com/v2/farcaster/storage/usage?fid=${userFid}`, {
-    //       method: 'GET',
-    //       headers: {
-    //         'accept': 'application/json',
-    //         'api_key': 'NEYNAR_FROG_FM', // Replace with your actual API key
-    //       },
-    //     });
-    //     const storageData = await storageResponse.json();
-
-    //     // Calculate total storage left
-    //     const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
-    //       storageData.reactions.capacity - storageData.reactions.used +
-    //       storageData.links.capacity - storageData.links.used;
-
-    //     // Check if storage data for current fid is lower than others
-    //     if (!minStorageData || totalStorageLeft < minStorageData.totalStorageLeft) {
-    //       minStorageData = {
-    //         fid: userFid,
-    //         totalStorageLeft: totalStorageLeft,
-    //         storageData: storageData
-    //       };
-    //     }
-    //     // Assign value to toFid inside the loop
-    //     toFid = minStorageData.fid;
-    //   } catch (error) {
-    //     console.error(`Error fetching storage data for FID: ${userFid}`, error);
-    //   }
-    // }));
-
-    // // Now you can use toFid outside of the loop
-    // console.log("ToFid:", toFid); // Example usage
-
-
+    // Get the fid with the minimum storage left
+    const toFid = displayData.length > 0 ? displayData[0].fid : null;
 
     return c.res({
       action: `/show/${fid}`, // Set action to stay on the same route
@@ -257,33 +254,26 @@ app.frame('/show/:fid', async (c) => {
             whiteSpace: 'pre-wrap',
           }}
         >
-           {displayData.map((follower: { pfp_url: string | undefined; username: any; fid: any; }, index: any) => (
+           {displayData.map((follower, index) => (
             <div key={index} style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'black', display: 'flex', fontSize: 30, flexDirection: 'column', marginBottom: 20 }}>
-              {/* Render the image only if follower.fid matches minStorageData.fid */}
-              {/* {minStorageData && minStorageData.fid === follower.fid && ( */}
-                <img
-                  src={follower.pfp_url}
-                  style={{
-                    width: 200,
-                    height: 200,
-                    borderRadius: 100,
-                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
-                  }}
-                />
-              {/* )} */}
-              {/* {minStorageData && minStorageData.fid === follower.fid && ( */}
-                <p style={{ color: "#432C8D", justifyContent: 'center', textAlign: 'center', fontSize: 40}}>@{follower.username}</p>
-              {/* )} */}
-              {/* {minStorageData && minStorageData.fid === follower.fid && (
-                <p>💾 Storage Left: {minStorageData.totalStorageLeft}</p>
-              )} */}
+              <img
+                src={follower.pfp_url}
+                style={{
+                  width: 200,
+                  height: 200,
+                  borderRadius: 100,
+                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
+                }}
+              />
+              <p style={{ color: "#432C8D", justifyContent: 'center', textAlign: 'center', fontSize: 40}}>@{follower.username}</p>
+              <p>💾 Storage Left: {follower.totalStorageLeft}</p>
             </div>
           ))}
         </div>
       ),
       intents: [
          currentPage > 1 && <Button value="back">⬅️ Back</Button>,
-        <Button action={`/gift/${fid}`}>◉ View</Button>,
+        <Button action={`/gift/${toFid}/${casts_capacity}/${casts_used}/${reactions_capacity}/${reactions_used}/${links_capacity}/${links_used}`}>◉ View</Button>,
         currentPage < totalPages && <Button value="next">Next ➡️</Button>,
         <Button action="/">🙅🏻‍♂️ Cancel</Button>
       ],
@@ -297,8 +287,11 @@ app.frame('/show/:fid', async (c) => {
 });
 
 
-app.frame('/gift/:toFid', async (c) => {
-  const { toFid } = c.req.param();
+app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactions_used/:links_capacity/:links_used', async (c) => {
+  const { toFid, casts_capacity, casts_used, reactions_capacity, reactions_used, links_capacity, links_used } = c.req.param();
+
+
+  console.log(toFid, casts_capacity);
 
   try {
     const response = await fetch(`${baseUrl}/user/bulk?fids=${toFid}&viewer_fid=${toFid}`, {
@@ -318,7 +311,7 @@ app.frame('/gift/:toFid', async (c) => {
         <div
             style={{
               alignItems: 'center',
-              background: 'linear-gradient(to right, #432889, #17101F)',
+              background: 'white',
               backgroundSize: '100% 100%',
               display: 'flex',
               flexDirection: 'column',
@@ -327,7 +320,7 @@ app.frame('/gift/:toFid', async (c) => {
               justifyContent: 'center',
               textAlign: 'center',
               width: '100%',
-              color: 'white',
+              color: '#432C8D',
               fontFamily: 'Space Mono',
               fontSize: 35,
               fontStyle: 'normal',
@@ -338,7 +331,7 @@ app.frame('/gift/:toFid', async (c) => {
               whiteSpace: 'pre-wrap',
             }}
           >
-            {/* <img
+            <img
               src={userData.pfp_url}
               style={{
                 width: 200,
@@ -346,12 +339,25 @@ app.frame('/gift/:toFid', async (c) => {
                 borderRadius: 100,
                 boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
               }}
-            /> */}
-            🎁 Give Storage to @{userData.username}?
+            />
+            <p style={{ margin: 15 }}>💾 Capacity</p>
+            <p style={{ color: "#432C8D", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
+              Casts {casts_used} of {casts_capacity}
+            </p>
+
+            <p style={{ color: "#432C8D", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
+              Reactions {reactions_used} of {reactions_capacity}
+            </p>
+
+            <p style={{ color: "#432C8D", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
+              Follow {links_used} of {links_capacity}
+            </p>
+
+            <p style={{ margin: 15 }}>🎁 Gift Storage to @{userData.username}?</p>
           </div>
       ),
       intents: [
-        <Button.Transaction target={`/tx-gift/${toFid}`}>🎁 Gift Storage</Button.Transaction>,
+        <Button.Transaction target={`/tx-gift/${toFid}`}>💳 Gift Storage</Button.Transaction>,
         <Button action="/">🙅🏻‍♂️ Cancel</Button>,
       ]
     })
