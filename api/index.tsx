@@ -33,9 +33,16 @@ export const app = new Frog({
   },
 })
 
+// Initialize total pages and current page
+const itemsPerPage = 1;
+let totalPages = 0;
+let currentPage = 1;
+
+// Neynar API base URL
 const baseUrl = 'https://api.neynar.com/v2/farcaster';
 
 app.frame('/', (c) => {
+  currentPage = 1;
   return c.res({
     image: (
       <div
@@ -138,9 +145,19 @@ app.frame('/dashboard', async (c) => {
   }
 });
 
+
 // Looping user data frame
 app.frame('/show/:fid', async (c) => {
   const { fid } = c.req.param();
+
+  const { buttonValue } = c;
+
+  // Handle navigation logic
+  if (buttonValue === 'next' && currentPage < totalPages) {
+    currentPage++;
+  } else if (buttonValue === 'back' && currentPage > 1) {
+    currentPage--;
+  }
 
   try {
     // Fetch relevant followers data
@@ -160,47 +177,57 @@ app.frame('/show/:fid', async (c) => {
       pfp_url: item.user.pfp_url,
     }));
 
-    console.log(extractedData);
+    // Calculate index range to display data from API
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, extractedData.length);
+    const displayData = extractedData.slice(startIndex, endIndex);
 
-    let minStorageData: { totalStorageLeft: any; fid?: any; storageData?: any; } | null = null; // Initialize minStorageData to null
-    let toFid: any = null; // Initialize toFid variable
+    // Update totalPages based on the current extracted data
+    totalPages = Math.ceil(extractedData.length / itemsPerPage);
+    // Limit totalPages to 5
+    totalPages = Math.min(totalPages, 5);
 
-    // Iterate through each fid and fetch storage data
-    await Promise.all(extractedData.map(async (user: { fid: any; }) => {
-      const userFid = user.fid;
+    // console.log(extractedData);
 
-      try {
-        const storageResponse = await fetch(`https://api.neynar.com/v2/farcaster/storage/usage?fid=${userFid}`, {
-          method: 'GET',
-          headers: {
-            'accept': 'application/json',
-            'api_key': 'NEYNAR_FROG_FM', // Replace with your actual API key
-          },
-        });
-        const storageData = await storageResponse.json();
+    // let minStorageData: { totalStorageLeft: any; fid?: any; storageData?: any; } | null = null; // Initialize minStorageData to null
+    // let toFid: any = null; // Initialize toFid variable
 
-        // Calculate total storage left
-        const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
-          storageData.reactions.capacity - storageData.reactions.used +
-          storageData.links.capacity - storageData.links.used;
+    // // Iterate through each fid and fetch storage data
+    // await Promise.all(extractedData.map(async (user: { fid: any; }) => {
+    //   const userFid = user.fid;
 
-        // Check if storage data for current fid is lower than others
-        if (!minStorageData || totalStorageLeft < minStorageData.totalStorageLeft) {
-          minStorageData = {
-            fid: userFid,
-            totalStorageLeft: totalStorageLeft,
-            storageData: storageData
-          };
-        }
-        // Assign value to toFid inside the loop
-        toFid = minStorageData.fid;
-      } catch (error) {
-        console.error(`Error fetching storage data for FID: ${userFid}`, error);
-      }
-    }));
+    //   try {
+    //     const storageResponse = await fetch(`https://api.neynar.com/v2/farcaster/storage/usage?fid=${userFid}`, {
+    //       method: 'GET',
+    //       headers: {
+    //         'accept': 'application/json',
+    //         'api_key': 'NEYNAR_FROG_FM', // Replace with your actual API key
+    //       },
+    //     });
+    //     const storageData = await storageResponse.json();
 
-    // Now you can use toFid outside of the loop
-    console.log("ToFid:", toFid); // Example usage
+    //     // Calculate total storage left
+    //     const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
+    //       storageData.reactions.capacity - storageData.reactions.used +
+    //       storageData.links.capacity - storageData.links.used;
+
+    //     // Check if storage data for current fid is lower than others
+    //     if (!minStorageData || totalStorageLeft < minStorageData.totalStorageLeft) {
+    //       minStorageData = {
+    //         fid: userFid,
+    //         totalStorageLeft: totalStorageLeft,
+    //         storageData: storageData
+    //       };
+    //     }
+    //     // Assign value to toFid inside the loop
+    //     toFid = minStorageData.fid;
+    //   } catch (error) {
+    //     console.error(`Error fetching storage data for FID: ${userFid}`, error);
+    //   }
+    // }));
+
+    // // Now you can use toFid outside of the loop
+    // console.log("ToFid:", toFid); // Example usage
 
 
 
@@ -230,10 +257,10 @@ app.frame('/show/:fid', async (c) => {
             whiteSpace: 'pre-wrap',
           }}
         >
-           {extractedData.map((follower: { pfp_url: string | undefined; username: any; fid: any; }, index: any) => (
+           {displayData.map((follower: { pfp_url: string | undefined; username: any; fid: any; }, index: any) => (
             <div key={index} style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'black', display: 'flex', fontSize: 30, flexDirection: 'column', marginBottom: 20 }}>
               {/* Render the image only if follower.fid matches minStorageData.fid */}
-              {minStorageData && minStorageData.fid === follower.fid && (
+              {/* {minStorageData && minStorageData.fid === follower.fid && ( */}
                 <img
                   src={follower.pfp_url}
                   style={{
@@ -243,21 +270,21 @@ app.frame('/show/:fid', async (c) => {
                     boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
                   }}
                 />
-              )}
-              {minStorageData && minStorageData.fid === follower.fid && (
+              {/* )} */}
+              {/* {minStorageData && minStorageData.fid === follower.fid && ( */}
                 <p style={{ color: "#432C8D", justifyContent: 'center', textAlign: 'center', fontSize: 40}}>@{follower.username}</p>
-              )}
-              {minStorageData && minStorageData.fid === follower.fid && (
+              {/* )} */}
+              {/* {minStorageData && minStorageData.fid === follower.fid && (
                 <p>💾 Storage Left: {minStorageData.totalStorageLeft}</p>
-              )}
+              )} */}
             </div>
           ))}
         </div>
       ),
       intents: [
-        // <Button value="back">⬅️ Back</Button>,
-        <Button action={`/gift/${toFid}`}>◉ View</Button>,
-        // <Button value="next">Next ➡️</Button>,
+         currentPage > 1 && <Button value="back">⬅️ Back</Button>,
+        <Button action={`/gift/${fid}`}>◉ View</Button>,
+        currentPage < totalPages && <Button value="next">Next ➡️</Button>,
         <Button action="/">🙅🏻‍♂️ Cancel</Button>
       ],
     });
