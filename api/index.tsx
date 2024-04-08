@@ -44,33 +44,34 @@ const baseUrl = 'https://api.neynar.com/v2/farcaster';
 app.frame('/', (c) => {
   currentPage = 1;
   return c.res({
-    image: (
-      <div
-        style={{
-          alignItems: 'center',
-          background: 'linear-gradient(to right, #432889, #17101F)',
-          backgroundSize: '100% 100%',
-          display: 'flex',
-          flexDirection: 'column',
-          flexWrap: 'nowrap',
-          height: '100%',
-          justifyContent: 'center',
-          textAlign: 'center',
-          width: '100%',
-          color: 'white',
-          fontFamily: 'Space Mono',
-          fontSize: 35,
-          fontStyle: 'normal',
-          letterSpacing: '-0.025em',
-          lineHeight: 1.4,
-          marginTop: 0,
-          padding: '0 120px',
-          whiteSpace: 'pre-wrap',
-        }}
-      >
-       Let's find people you follow who are low on storage and gift them additional storage.
-      </div>
-    ),
+    image: '/storage-farcaster-gift.jpeg',
+    // image: (
+    //   <div
+    //     style={{
+    //       alignItems: 'center',
+    //       background: 'linear-gradient(to right, #432889, #17101F)',
+    //       backgroundSize: '100% 100%',
+    //       display: 'flex',
+    //       flexDirection: 'column',
+    //       flexWrap: 'nowrap',
+    //       height: '100%',
+    //       justifyContent: 'center',
+    //       textAlign: 'center',
+    //       width: '100%',
+    //       color: 'white',
+    //       fontFamily: 'Space Mono',
+    //       fontSize: 35,
+    //       fontStyle: 'normal',
+    //       letterSpacing: '-0.025em',
+    //       lineHeight: 1.4,
+    //       marginTop: 0,
+    //       padding: '0 120px',
+    //       whiteSpace: 'pre-wrap',
+    //     }}
+    //   >
+    //    Let's find people you follow who are low on storage and gift them additional storage.
+    //   </div>
+    // ),
     intents: [
       <Button action="/dashboard">📌 Lets Get Started</Button>,
     ]
