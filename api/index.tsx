@@ -1,12 +1,12 @@
 import { Button, Frog } from 'frog'
 import { neynar } from 'frog/hubs'
 import { handle } from 'frog/vercel'
+import { storageRegistry } from "../lib/contracts.js";
+import fetch from 'node-fetch';
 
 // Uncomment this packages to tested on local server
 import { devtools } from 'frog/dev';
 import { serveStatic } from 'frog/serve-static';
-import { storageRegistry } from "../lib/contracts.js";
-import fetch from 'node-fetch';
 
 // Uncomment to use Edge Runtime.
 // export const config = {
@@ -163,6 +163,7 @@ app.frame('/show/:fid', async (c) => {
     console.log(extractedData);
 
     let minStorageData: { totalStorageLeft: any; fid?: any; storageData?: any; } | null = null; // Initialize minStorageData to null
+    let toFid: any = null; // Initialize toFid variable
 
     // Iterate through each fid and fetch storage data
     await Promise.all(extractedData.map(async (user: { fid: any; }) => {
@@ -191,14 +192,17 @@ app.frame('/show/:fid', async (c) => {
             storageData: storageData
           };
         }
+        // Assign value to toFid inside the loop
+        toFid = minStorageData.fid;
       } catch (error) {
         console.error(`Error fetching storage data for FID: ${userFid}`, error);
       }
     }));
 
-    // Log storage data for the fid with lowest storage compared to others
-    console.log(`Storage data for FID with lowest storage:`);
-    console.log(minStorageData);
+    // Now you can use toFid outside of the loop
+    console.log("ToFid:", toFid); // Example usage
+
+
 
     return c.res({
       action: `/show/${fid}`, // Set action to stay on the same route
@@ -252,7 +256,7 @@ app.frame('/show/:fid', async (c) => {
       ),
       intents: [
         // <Button value="back">⬅️ Back</Button>,
-        <Button action={`/gift/${fid}`}>◉ View</Button>,
+        <Button action={`/gift/${toFid}`}>◉ View</Button>,
         // <Button value="next">Next ➡️</Button>,
         <Button action="/">🙅🏻‍♂️ Cancel</Button>
       ],
@@ -266,56 +270,74 @@ app.frame('/show/:fid', async (c) => {
 });
 
 
-app.frame('/gift/:fid', (c) => {
-  const { fid } = c.req.param();
-  return c.res({
-    action: '/finish',
-    image: (
-      <div
-          style={{
-            alignItems: 'center',
-            background: 'white',
-            backgroundSize: '100% 100%',
-            display: 'flex',
-            flexDirection: 'column',
-            flexWrap: 'nowrap',
-            height: '100%',
-            justifyContent: 'center',
-            textAlign: 'center',
-            width: '100%',
-            color: 'black',
-            fontFamily: 'Space Mono',
-            fontSize: 35,
-            fontStyle: 'normal',
-            letterSpacing: '-0.025em',
-            lineHeight: 1.4,
-            marginTop: 0,
-            padding: '0 120px',
-            whiteSpace: 'pre-wrap',
-          }}
-        >
-          {/* <img
-            src={userData.pfp_url}
+app.frame('/gift/:toFid', async (c) => {
+  const { toFid } = c.req.param();
+
+  try {
+    const response = await fetch(`${baseUrl}/user/bulk?fids=${toFid}&viewer_fid=${toFid}`, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'api_key': 'NEYNAR_FROG_FM',
+      },
+    });
+
+    const data = await response.json();
+    const userData = data.users[0];
+
+    return c.res({
+      action: '/finish',
+      image: (
+        <div
             style={{
-              width: 200,
-              height: 200,
-              borderRadius: 100,
-              boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
+              alignItems: 'center',
+              background: 'linear-gradient(to right, #432889, #17101F)',
+              backgroundSize: '100% 100%',
+              display: 'flex',
+              flexDirection: 'column',
+              flexWrap: 'nowrap',
+              height: '100%',
+              justifyContent: 'center',
+              textAlign: 'center',
+              width: '100%',
+              color: 'white',
+              fontFamily: 'Space Mono',
+              fontSize: 35,
+              fontStyle: 'normal',
+              letterSpacing: '-0.025em',
+              lineHeight: 1.4,
+              marginTop: 0,
+              padding: '0 120px',
+              whiteSpace: 'pre-wrap',
             }}
-          /> */}
-          {/* <p>Hi {userData.display_name} ✋🏻</p> */}
-          🎁 Give Storage to @0x94t3z?
-        </div>
-    ),
-    intents: [
-      <Button.Transaction target={`/tx-gift/${fid}`}>🎁 Gift Storage</Button.Transaction>,
-      <Button action="/">🙅🏻‍♂️ Cancel</Button>,
-    ]
-  })
+          >
+            {/* <img
+              src={userData.pfp_url}
+              style={{
+                width: 200,
+                height: 200,
+                borderRadius: 100,
+                boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
+              }}
+            /> */}
+            🎁 Give Storage to @{userData.username}?
+          </div>
+      ),
+      intents: [
+        <Button.Transaction target={`/tx-gift/${toFid}`}>🎁 Gift Storage</Button.Transaction>,
+        <Button action="/">🙅🏻‍♂️ Cancel</Button>,
+      ]
+    })
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      return c.res({
+        image: <div style={{ color: 'red' }}>An error occurred.</div>,
+      });
+    }
 })
 
  
-app.transaction('/tx-gift/:fid', async (c, next) => {
+app.transaction('/tx-gift/:toFid', async (c, next) => {
   await next();
   const txParams = await c.res.json();
   txParams.attribution = false;
@@ -327,7 +349,7 @@ app.transaction('/tx-gift/:fid', async (c, next) => {
   });
 },
 async (c) => {
-  const { fid } = c.req.param();
+  const { toFid } = c.req.param();
 
   // Get current storage price
   const units = 1n;
@@ -337,7 +359,7 @@ async (c) => {
     abi: storageRegistry.abi,
     chainId: "eip155:10",
     functionName: "rent",
-    args: [BigInt(fid), units],
+    args: [BigInt(toFid), units],
     to: storageRegistry.address,
     value: price,
   });
