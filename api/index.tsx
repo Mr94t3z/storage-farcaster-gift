@@ -5,8 +5,8 @@ import { storageRegistry } from "../lib/contracts.js";
 import fetch from 'node-fetch';
 
 // Uncomment this packages to tested on local server
-// import { devtools } from 'frog/dev';
-// import { serveStatic } from 'frog/serve-static';
+import { devtools } from 'frog/dev';
+import { serveStatic } from 'frog/serve-static';
 
 // Uncomment to use Edge Runtime.
 // export const config = {
@@ -207,14 +207,6 @@ app.frame('/show/:fid', async (c) => {
     // Sort the extracted data in ascending order based on total storage left
     extractedData.sort((a, b) => a.totalStorageLeft - b.totalStorageLeft);
 
-    // Get the storage capacity and used for the current user
-    const casts_capacity = extractedData[0].casts_capacity;
-    const casts_used = extractedData[0].casts_used;
-    const reactions_capacity = extractedData[0].reactions_capacity;
-    const reactions_used = extractedData[0].reactions_used;
-    const links_capacity = extractedData[0].links_capacity;
-    const links_used = extractedData[0].links_used;
-
     // Calculate index range to display data from API
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, extractedData.length);
@@ -225,8 +217,14 @@ app.frame('/show/:fid', async (c) => {
     // Limit totalPages to 5
     totalPages = Math.min(totalPages, 5);
 
-    // Get the fid with the minimum storage left
+    // Get the storage capacity and used for the current user
     const toFid = displayData.length > 0 ? displayData[0].fid : null;
+    const casts_capacity = displayData.length > 0 ? displayData[0].casts_capacity : 0;
+    const casts_used = displayData.length > 0 ? displayData[0].casts_used : 0;
+    const reactions_capacity = displayData.length > 0 ? displayData[0].reactions_capacity : 0;
+    const reactions_used = displayData.length > 0 ? displayData[0].reactions_used : 0;
+    const links_capacity = displayData.length > 0 ? displayData[0].links_capacity : 0;
+    const links_used = displayData.length > 0 ? displayData[0].links_used : 0;
 
     return c.res({
       action: `/show/${fid}`, // Set action to stay on the same route
@@ -440,7 +438,7 @@ app.frame('/finish', (c) => {
 
 
 // Uncomment for local server testing
-// devtools(app, { serveStatic });
+devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)
