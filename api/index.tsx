@@ -5,8 +5,8 @@ import { storageRegistry } from "../lib/contracts.js";
 import fetch from 'node-fetch';
 
 // Uncomment this packages to tested on local server
-import { devtools } from 'frog/dev';
-import { serveStatic } from 'frog/serve-static';
+// import { devtools } from 'frog/dev';
+// import { serveStatic } from 'frog/serve-static';
 
 // Uncomment to use Edge Runtime.
 // export const config = {
@@ -45,33 +45,6 @@ app.frame('/', (c) => {
   currentPage = 1;
   return c.res({
     image: '/storage-farcaster-gift.jpeg',
-    // image: (
-    //   <div
-    //     style={{
-    //       alignItems: 'center',
-    //       background: 'linear-gradient(to right, #432889, #17101F)',
-    //       backgroundSize: '100% 100%',
-    //       display: 'flex',
-    //       flexDirection: 'column',
-    //       flexWrap: 'nowrap',
-    //       height: '100%',
-    //       justifyContent: 'center',
-    //       textAlign: 'center',
-    //       width: '100%',
-    //       color: 'white',
-    //       fontFamily: 'Space Mono',
-    //       fontSize: 35,
-    //       fontStyle: 'normal',
-    //       letterSpacing: '-0.025em',
-    //       lineHeight: 1.4,
-    //       marginTop: 0,
-    //       padding: '0 120px',
-    //       whiteSpace: 'pre-wrap',
-    //     }}
-    //   >
-    //    Let's find people you follow who are low on storage and gift them additional storage.
-    //   </div>
-    // ),
     intents: [
       <Button action="/dashboard">📌 Lets Get Started</Button>,
     ]
@@ -217,7 +190,7 @@ app.frame('/show/:fid', async (c) => {
     // Limit totalPages to 5
     totalPages = Math.min(totalPages, 5);
 
-    // Get the storage capacity and used for the current user
+    // Get the follower choosen to gift storage
     const toFid = displayData.length > 0 ? displayData[0].fid : null;
     const casts_capacity = displayData.length > 0 ? displayData[0].casts_capacity : 0;
     const casts_used = displayData.length > 0 ? displayData[0].casts_used : 0;
@@ -438,7 +411,7 @@ app.frame('/finish', (c) => {
 
 
 // Uncomment for local server testing
-devtools(app, { serveStatic });
+// devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)
