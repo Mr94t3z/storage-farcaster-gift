@@ -318,7 +318,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
             </p>
 
             <p style={{ color: "#432C8D", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
-              Follow {links_used} of {links_capacity}
+              Follows {links_used} of {links_capacity}
             </p>
 
             <p style={{ margin: 15 }}>🎁 Gift Storage to @{userData.username}?</p>
