@@ -5,8 +5,8 @@ import { storageRegistry } from "../lib/contracts.js";
 import fetch from 'node-fetch';
 
 // Uncomment this packages to tested on local server
-import { devtools } from 'frog/dev';
-import { serveStatic } from 'frog/serve-static';
+// import { devtools } from 'frog/dev';
+// import { serveStatic } from 'frog/serve-static';
 
 // Uncomment to use Edge Runtime.
 // export const config = {
@@ -199,9 +199,6 @@ app.frame('/show/:fid', async (c) => {
     const links_capacity = displayData.length > 0 ? displayData[0].links_capacity : 0;
     const links_used = displayData.length > 0 ? displayData[0].links_used : 0;
 
-
-    console.log(displayData);
-
     return c.res({
       action: `/show/${fid}`, // Set action to stay on the same route
       image: (
@@ -243,7 +240,11 @@ app.frame('/show/:fid', async (c) => {
                   alt="Profile Picture"
               />
               <p style={{ color: "#432C8D", justifyContent: 'center', textAlign: 'center', fontSize: 40}}>@{follower.username}</p>
-              <p>💾 Storage Left: {follower.totalStorageLeft}</p>
+              {follower.totalStorageLeft <= 0 ? (
+                <p>💾 Out of storage!</p>
+              ) : (
+                <p>💾 Storage Left: {follower.totalStorageLeft}</p>
+              )}
             </div>
           ))}
         </div>
@@ -417,7 +418,7 @@ app.frame('/finish', (c) => {
 
 
 // Uncomment for local server testing
-devtools(app, { serveStatic });
+// devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)
