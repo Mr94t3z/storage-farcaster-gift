@@ -5,8 +5,8 @@ import { storageRegistry } from "../lib/contracts.js";
 import fetch from 'node-fetch';
 
 // Uncomment this packages to tested on local server
-// import { devtools } from 'frog/dev';
-// import { serveStatic } from 'frog/serve-static';
+import { devtools } from 'frog/dev';
+import { serveStatic } from 'frog/serve-static';
 
 // Uncomment to use Edge Runtime.
 // export const config = {
@@ -94,13 +94,15 @@ app.frame('/dashboard', async (c) => {
           }}
         >
           <img
-            src={userData.pfp_url}
+            src={userData.pfp_url.toLowerCase().endsWith('.webp') ? '/images/no_avatar.png' : userData.pfp_url}
             style={{
               width: 200,
               height: 200,
               borderRadius: 100,
               boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
             }}
+            width={200} 
+            height={200} 
           />
           <p>Hi {userData.display_name} ✋🏻</p>
           Let's find out who among the people you follow is low on storage.
@@ -135,7 +137,7 @@ app.frame('/show/:fid', async (c) => {
 
   try {
     // Fetch relevant followers data
-    const followersResponse = await fetch(`${baseUrl}/followers/relevant?target_fid=${fid}&viewer_fid=${fid}`, {
+    const followersResponse = await fetch(`https://api.neynar.com/v1/farcaster/followers?fid=${fid}&viewerFid=${fid}&limit=150`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
@@ -145,36 +147,34 @@ app.frame('/show/:fid', async (c) => {
     const followersData = await followersResponse.json();
 
     // Extract relevant fields from followers data and add total storage left
-    const extractedData = await Promise.all(followersData.top_relevant_followers_hydrated.map(async (item: { user: { fid: any; username: any; pfp_url: any; }; }) => {
-      const fid = item.user.fid;
-      const storageResponse = await fetch(`${baseUrl}/storage/usage?fid=${fid}`, {
-        method: 'GET',
-        headers: {
-          'accept': 'application/json',
-          'api_key': 'NEYNAR_FROG_FM',
-        },
-      });
-    const storageData = await storageResponse.json();
+    const extractedData = await Promise.all(followersData.result.users.map(async (user: { fid: any; username: any; pfp: { url: any; }; }) => {
+        const fid = user.fid;
+        let storageResponse = await fetch(`${baseUrl}/storage/usage?fid=${fid}`, {
+          method: 'GET',
+          headers: {
+            'accept': 'application/json',
+            'api_key': 'NEYNAR_FROG_FM',
+          },
+        });
+        let storageData = await storageResponse.json();
 
-    // Calculate total storage left
-    const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
-    storageData.reactions.capacity - storageData.reactions.used +
-    storageData.links.capacity - storageData.links.used;
+        // Calculate total storage left
+        const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
+          storageData.reactions.capacity - storageData.reactions.used +
+          storageData.links.capacity - storageData.links.used;
 
-    // Return the extracted data with total storage left
-    return {
-      fid: item.user.fid,
-      username: item.user.username,
-      pfp_url: item.user.pfp_url,
-      totalStorageLeft: totalStorageLeft,
-      casts_capacity: storageData.casts.capacity,
-      casts_used: storageData.casts.used,
-      reactions_capacity: storageData.reactions.capacity,
-      reactions_used: storageData.reactions.used,
-      links_capacity: storageData.links.capacity,
-      links_used: storageData.links.used,
-    };
-
+        return {
+          fid: user.fid,
+          username: user.username,
+          pfp_url: user.pfp.url,
+          totalStorageLeft: totalStorageLeft,
+          casts_capacity: storageData.casts.capacity,
+          casts_used: storageData.casts.used,
+          reactions_capacity: storageData.reactions.capacity,
+          reactions_used: storageData.reactions.used,
+          links_capacity: storageData.links.capacity,
+          links_used: storageData.links.used,
+        };
     }));
 
     // Sort the extracted data in ascending order based on total storage left
@@ -198,6 +198,9 @@ app.frame('/show/:fid', async (c) => {
     const reactions_used = displayData.length > 0 ? displayData[0].reactions_used : 0;
     const links_capacity = displayData.length > 0 ? displayData[0].links_capacity : 0;
     const links_used = displayData.length > 0 ? displayData[0].links_used : 0;
+
+
+    console.log(displayData);
 
     return c.res({
       action: `/show/${fid}`, // Set action to stay on the same route
@@ -228,13 +231,16 @@ app.frame('/show/:fid', async (c) => {
            {displayData.map((follower, index) => (
             <div key={index} style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'black', display: 'flex', fontSize: 30, flexDirection: 'column', marginBottom: 20 }}>
               <img
-                src={follower.pfp_url}
-                style={{
-                  width: 200,
-                  height: 200,
-                  borderRadius: 100,
-                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
-                }}
+                  src={follower.pfp_url.toLowerCase().endsWith('.webp') ? '/images/no_avatar.png' : follower.pfp_url}
+                  style={{
+                      width: 200,
+                      height: 200,
+                      borderRadius: 100,
+                      boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
+                  }}
+                  width={200}
+                  height={200}
+                  alt="Profile Picture"
               />
               <p style={{ color: "#432C8D", justifyContent: 'center', textAlign: 'center', fontSize: 40}}>@{follower.username}</p>
               <p>💾 Storage Left: {follower.totalStorageLeft}</p>
@@ -300,7 +306,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
             }}
           >
             <img
-              src={userData.pfp_url}
+              src={userData.pfp_url.toLowerCase().endsWith('.webp') ? '/images/no_avatar.png' : userData.pfp_url}
               style={{
                 width: 200,
                 height: 200,
@@ -411,7 +417,7 @@ app.frame('/finish', (c) => {
 
 
 // Uncomment for local server testing
-// devtools(app, { serveStatic });
+devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)
