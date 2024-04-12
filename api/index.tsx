@@ -60,7 +60,7 @@ app.frame('/dashboard', async (c) => {
       method: 'GET',
       headers: {
         'accept': 'application/json',
-        'api_key': 'NEYNAR_FROG_FM',
+        'api_key': 'NEYNAR_API_DOCS',
       },
     });
 
@@ -104,7 +104,7 @@ app.frame('/dashboard', async (c) => {
             width={200} 
             height={200} 
           />
-          <p>Hi {userData.username} ✋🏻</p>
+          <p>Hi {userData.display_name} ✋🏻</p>
           Let's find out who among the people you follow is low on storage.
         </div>
       ),
@@ -132,7 +132,7 @@ async function getStorageData(fid: any) {
           method: 'GET',
           headers: {
               'accept': 'application/json',
-              'api_key': 'NEYNAR_FROG_FM',
+              'api_key': 'NEYNAR_API_DOCS',
           },
       });
       if (!response.ok) {
@@ -164,7 +164,7 @@ app.frame('/show/:fid', async (c) => {
       method: 'GET',
       headers: {
         'accept': 'application/json',
-        'api_key': 'NEYNAR_FROG_FM',
+        'api_key': 'NEYNAR_API_DOCS',
       },
     });
     const followersData = await followersResponse.json();
@@ -287,7 +287,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
       method: 'GET',
       headers: {
         'accept': 'application/json',
-        'api_key': 'NEYNAR_FROG_FM',
+        'api_key': 'NEYNAR_API_DOCS',
       },
     });
 
