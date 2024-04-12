@@ -104,7 +104,7 @@ app.frame('/dashboard', async (c) => {
             width={200} 
             height={200} 
           />
-          <p>Hi {userData.display_name} ✋🏻</p>
+          <p>Hi {userData.username} ✋🏻</p>
           Let's find out who among the people you follow is low on storage.
         </div>
       ),
@@ -121,8 +121,31 @@ app.frame('/dashboard', async (c) => {
   }
 });
 
+// Handle rate limiting for storage data API
+const storageCache = new Map();
 
-// Looping user data frame
+async function getStorageData(fid: any) {
+  if (storageCache.has(fid)) {
+      return storageCache.get(fid);
+  } else {
+      const response = await fetch(`${baseUrl}/storage/usage?fid=${fid}`, {
+          method: 'GET',
+          headers: {
+              'accept': 'application/json',
+              'api_key': 'NEYNAR_FROG_FM',
+          },
+      });
+      if (!response.ok) {
+          console.error('API Error:', response.status, await response.text()); // Log the status and text of the error response
+          throw new Error(`Failed to fetch storage data: ${response.status}`);
+      }
+      const storageData = await response.json();
+      storageCache.set(fid, storageData); // Cache the data
+      return storageData;
+  }
+}
+
+
 app.frame('/show/:fid', async (c) => {
   const { fid } = c.req.param();
 
@@ -148,15 +171,7 @@ app.frame('/show/:fid', async (c) => {
 
     // Extract relevant fields from followers data and add total storage left
     const extractedData = await Promise.all(followersData.result.users.map(async (user: { fid: any; username: any; pfp: { url: any; }; }) => {
-        const fid = user.fid;
-        let storageResponse = await fetch(`${baseUrl}/storage/usage?fid=${fid}`, {
-          method: 'GET',
-          headers: {
-            'accept': 'application/json',
-            'api_key': 'NEYNAR_FROG_FM',
-          },
-        });
-        let storageData = await storageResponse.json();
+        const storageData = await getStorageData(user.fid);
 
         // Calculate total storage left
         const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
@@ -202,8 +217,7 @@ app.frame('/show/:fid', async (c) => {
     return c.res({
       action: `/show/${fid}`, // Set action to stay on the same route
       image: (
-        <div
-          style={{
+        <div style={{
             alignItems: 'center',
             background: 'white',
             backgroundSize: '100% 100%',
@@ -223,8 +237,7 @@ app.frame('/show/:fid', async (c) => {
             marginTop: 0,
             padding: '0 120px',
             whiteSpace: 'pre-wrap',
-          }}
-        >
+          }}>
            {displayData.map((follower, index) => (
             <div key={index} style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'black', display: 'flex', fontSize: 30, flexDirection: 'column', marginBottom: 20 }}>
               <img
@@ -251,7 +264,7 @@ app.frame('/show/:fid', async (c) => {
       ),
       intents: [
          currentPage > 1 && <Button value="back">⬅️ Back</Button>,
-        <Button action={`/gift/${toFid}/${casts_capacity}/${casts_used}/${reactions_capacity}/${reactions_used}/${links_capacity}/${links_used}`}>◉ View</Button>,
+         <Button action={`/gift/${toFid}/${casts_capacity}/${casts_used}/${reactions_capacity}/${reactions_used}/${links_capacity}/${links_used}`}>◉ View</Button>,
         currentPage < totalPages && <Button value="next">Next ➡️</Button>,
         <Button action="/">🙅🏻‍♂️ Cancel</Button>
       ],
@@ -263,6 +276,7 @@ app.frame('/show/:fid', async (c) => {
     });
   }
 });
+
 
 
 app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactions_used/:links_capacity/:links_used', async (c) => {
