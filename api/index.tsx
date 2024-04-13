@@ -264,10 +264,10 @@ app.frame('/show/:fid', async (c) => {
         </div>
       ),
       intents: [
-         currentPage > 1 && <Button value="back">⬅️ Back</Button>,
          <Button action={`/gift/${toFid}/${casts_capacity}/${casts_used}/${reactions_capacity}/${reactions_used}/${links_capacity}/${links_used}`}>◉ View</Button>,
+         <Button action="/">🙅🏻‍♂️ Cancel</Button>,
+         currentPage > 1 && <Button value="back">⬅️ Back</Button>,
         currentPage < totalPages && <Button value="next">Next ➡️</Button>,
-        <Button action="/">🙅🏻‍♂️ Cancel</Button>
       ],
     });
   } catch (error) {
