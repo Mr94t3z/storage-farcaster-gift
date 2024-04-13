@@ -110,6 +110,7 @@ app.frame('/dashboard', async (c) => {
       ),
       intents: [
         <Button action={`/show/${fid}`}>💁🏻 Show User</Button>,
+        <Button action="/dashboard">🔄 Refresh</Button>,
         <Button action="/">🙅🏻‍♂️ Cancel</Button>
       ],
     });
@@ -160,7 +161,7 @@ app.frame('/show/:fid', async (c) => {
 
   try {
     // Fetch relevant followers data
-    const followersResponse = await fetch(`https://api.neynar.com/v1/farcaster/following?fid=${fid}&viewerFid=${fid}&limit=150`, {
+    const followersResponse = await fetch(`https://api.neynar.com/v1/farcaster/following?fid=${fid}&viewerFid=${fid}&limit=15`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
@@ -276,7 +277,6 @@ app.frame('/show/:fid', async (c) => {
     });
   }
 });
-
 
 
 app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactions_used/:links_capacity/:links_used', async (c) => {
