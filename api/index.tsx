@@ -158,7 +158,7 @@ app.frame('/show/:fid', async (c) => {
 
   try {
     // Fetch relevant followers data
-    const followersResponse = await fetch(`https://api.neynar.com/v1/farcaster/following?fid=${fid}&viewerFid=${fid}&limit=100`, {
+    const followersResponse = await fetch(`https://api.neynar.com/v1/farcaster/following?fid=${fid}&viewerFid=${fid}&limit=15`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
