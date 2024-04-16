@@ -1,5 +1,4 @@
 import { Button, Frog } from 'frog'
-import { neynar } from 'frog/hubs'
 import { handle } from 'frog/vercel'
 import { storageRegistry } from "../lib/contracts.js";
 import fetch from 'node-fetch';
@@ -16,8 +15,6 @@ import fetch from 'node-fetch';
 export const app = new Frog({
   assetsPath: '/',
   basePath: '/api/frame',
-  hub: neynar({ apiKey: 'NEYNAR_FROG_FM' }),
-  verify: 'silent',
   imageOptions: {
     /* Other default options */
     fonts: [
