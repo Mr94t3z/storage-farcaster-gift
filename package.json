@@ -9,8 +9,10 @@
   },
   "dependencies": {
     "@neynar/nodejs-sdk": "^1.15.0",
+    "@paywithglide/glide-js": "^0.6.2",
     "frog": "latest",
-    "hono": "^4"
+    "hono": "^4",
+    "viem": "^2.9.31"
   },
   "devDependencies": {
     "@types/node-fetch": "^2.6.11",

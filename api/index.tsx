@@ -1,16 +1,31 @@
 import { Button, Frog } from 'frog'
 import { handle } from 'frog/vercel'
-import { storageRegistry } from "../lib/contracts.js";
+// import { storageRegistry } from "../lib/contracts.js";
+import { abi } from "../lib/storageAbiBot.js";
 import fetch from 'node-fetch';
+import { createGlideClient, Chains, CurrenciesByChain } from "@paywithglide/glide-js";
+import { encodeFunctionData, hexToBigInt, toHex } from 'viem';
+import dotenv from 'dotenv';
 
 // Uncomment this packages to tested on local server
-// import { devtools } from 'frog/dev';
-// import { serveStatic } from 'frog/serve-static';
+import { devtools } from 'frog/dev';
+import { serveStatic } from 'frog/serve-static';
 
 // Uncomment to use Edge Runtime.
 // export const config = {
 //   runtime: 'edge',
 // }
+
+// Load environment variables from .env file
+dotenv.config();
+
+export const glideClient = createGlideClient({
+  projectId: process.env.GLIDE_PROJECT_ID,
+ 
+  // Lists the chains where payments will be accepted
+  chains: [Chains.Base],
+  // chains: [base, optimism],
+});
 
 export const app = new Frog({
   assetsPath: '/',
@@ -41,9 +56,9 @@ const baseUrl = 'https://api.neynar.com/v2/farcaster';
 app.frame('/', (c) => {
   currentPage = 1;
   return c.res({
-    image: '/storage-farcaster-gift.jpeg',
+    image: '/storage-farcaster-gift-with-glide.jpeg',
     intents: [
-      <Button action="/dashboard">📌 Lets Get Started</Button>,
+      <Button action="/dashboard">⎋ Lets Get Started</Button>,
     ]
   })
 })
@@ -88,6 +103,7 @@ app.frame('/dashboard', async (c) => {
             marginTop: 0,
             padding: '0 120px',
             whiteSpace: 'pre-wrap',
+            border: '1em solid rgb(136,99,208)'
           }}
         >
           <img
@@ -106,16 +122,45 @@ app.frame('/dashboard', async (c) => {
         </div>
       ),
       intents: [
-        <Button action={`/show/${fid}`}>💁🏻 Show User</Button>,
+        <Button action={`/show/${fid}`}>⇧ Show User</Button>,
         <Button action="/dashboard">🔄 Refresh</Button>,
-        <Button action="/">🙅🏻‍♂️ Cancel</Button>
+        <Button action="/">⏏︎ Cancel</Button>
       ],
     });
   } catch (error) {
     console.error('Error fetching user data:', error);
     return c.res({
-      image: <div style={{ color: 'red' }}>An error occurred.</div>,
-    });
+      image: (
+          <div
+              style={{
+                  alignItems: 'center',
+                  background: 'rgb(136,99,208)',
+                  backgroundSize: '100% 100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flexWrap: 'nowrap',
+                  height: '100%',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  width: '100%',
+                  color: '#432C8D',
+                  fontFamily: 'Space Mono',
+                  fontSize: 35,
+                  fontStyle: 'normal',
+                  letterSpacing: '-0.025em',
+                  lineHeight: 1.4,
+                  marginTop: 0,
+                  padding: '0 120px',
+                  whiteSpace: 'pre-wrap',
+              }}
+          >
+            Uh oh, you clicked the button too fast! Please try again.
+          </div>
+      ),
+      intents: [
+          <Button action='/'>⏏︎ Try Again</Button>,
+      ],
+  });
   }
 });
 
@@ -235,6 +280,7 @@ app.frame('/show/:fid', async (c) => {
             marginTop: 0,
             padding: '0 120px',
             whiteSpace: 'pre-wrap',
+            border: '1em solid rgb(136,99,208)'
           }}>
            {displayData.map((follower, index) => (
             <div key={index} style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'black', display: 'flex', fontSize: 30, flexDirection: 'column', marginBottom: 20 }}>
@@ -262,16 +308,45 @@ app.frame('/show/:fid', async (c) => {
       ),
       intents: [
          <Button action={`/gift/${toFid}/${casts_capacity}/${casts_used}/${reactions_capacity}/${reactions_used}/${links_capacity}/${links_used}`}>◉ View</Button>,
-         <Button action="/">🙅🏻‍♂️ Cancel</Button>,
-         currentPage > 1 && <Button value="back">⬅️ Back</Button>,
-        currentPage < totalPages && <Button value="next">Next ➡️</Button>,
+         <Button action="/">⏏︎ Cancel</Button>,
+         currentPage > 1 && <Button value="back">← Back</Button>,
+        currentPage < totalPages && <Button value="next">Next →</Button>,
       ],
     });
   } catch (error) {
     console.error('Error fetching user data:', error);
     return c.res({
-      image: <div style={{ color: 'red' }}>An error occurred.</div>,
-    });
+      image: (
+          <div
+              style={{
+                  alignItems: 'center',
+                  background: 'rgb(136,99,208)',
+                  backgroundSize: '100% 100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flexWrap: 'nowrap',
+                  height: '100%',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  width: '100%',
+                  color: '#432C8D',
+                  fontFamily: 'Space Mono',
+                  fontSize: 35,
+                  fontStyle: 'normal',
+                  letterSpacing: '-0.025em',
+                  lineHeight: 1.4,
+                  marginTop: 0,
+                  padding: '0 120px',
+                  whiteSpace: 'pre-wrap',
+              }}
+          >
+            Uh oh, you clicked the button too fast! Please try again.
+          </div>
+      ),
+      intents: [
+          <Button action='/'>⏏︎ Try Again</Button>,
+      ],
+  });
   }
 });
 
@@ -292,7 +367,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
     const userData = data.users[0];
 
     return c.res({
-      action: '/finish',
+      action: '/tx-status',
       image: (
         <div
             style={{
@@ -315,6 +390,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
               marginTop: 0,
               padding: '0 120px',
               whiteSpace: 'pre-wrap',
+              border: '1em solid rgb(136,99,208)'
             }}
           >
             <img
@@ -344,14 +420,43 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
       ),
       intents: [
         <Button.Transaction target={`/tx-gift/${toFid}`}>💰 Gift Storage</Button.Transaction>,
-        <Button action="/">🙅🏻‍♂️ Cancel</Button>,
+        <Button action="/">⏏︎ Cancel</Button>,
       ]
     })
     } catch (error) {
       console.error('Error fetching user data:', error);
       return c.res({
-        image: <div style={{ color: 'red' }}>An error occurred.</div>,
-      });
+        image: (
+            <div
+                style={{
+                    alignItems: 'center',
+                    background: 'rgb(136,99,208)',
+                    backgroundSize: '100% 100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flexWrap: 'nowrap',
+                    height: '100%',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    width: '100%',
+                    color: '#432C8D',
+                    fontFamily: 'Space Mono',
+                    fontSize: 35,
+                    fontStyle: 'normal',
+                    letterSpacing: '-0.025em',
+                    lineHeight: 1.4,
+                    marginTop: 0,
+                    padding: '0 120px',
+                    whiteSpace: 'pre-wrap',
+                }}
+            >
+              Uh oh, you clicked the button too fast! Please try again.
+            </div>
+        ),
+        intents: [
+            <Button action='/'>⏏︎ Try Again</Button>,
+        ],
+    });
     }
 })
 
@@ -368,68 +473,110 @@ app.transaction('/tx-gift/:toFid', async (c, next) => {
   });
 },
 async (c) => {
+  const { address } = c;
   const { toFid } = c.req.param();
 
-  // Get current storage price
-  const units = 1n;
-  const price = await storageRegistry.read.price([units]);
+  const { unsignedTransaction } = await glideClient.createSession({
+    payerWalletAddress: address,
+   
+    // Optional. Setting this restricts the user to only
+    // pay with the specified currency.
+    paymentCurrency: CurrenciesByChain.OptimismMainnet.ETH,
+    
+    transaction: {
+      chainId: Chains.Optimism.caip2,
+      to: "0x511372B44231a31527025a3D273C1dc0a83D77aF",
+      value: toHex(1313000000000000n),
+      input: encodeFunctionData({
+        abi: abi,
+        functionName: "subscribe",
+        args: [BigInt(toFid), 1n],
+      }),
+    },
+  });
 
-  return c.contract({
-    abi: storageRegistry.abi,
-    chainId: "eip155:10",
-    functionName: "rent",
-    args: [BigInt(toFid), units],
-    to: storageRegistry.address,
-    value: price,
+  if (!unsignedTransaction) {
+    throw new Error("missing unsigned transaction");
+  }
+
+  return c.send({
+    chainId: Chains.Base.caip2,
+    to: unsignedTransaction.address,
+    data: unsignedTransaction.input,
+    value: hexToBigInt(unsignedTransaction.value),
   });
 })
 
 
-app.frame('/finish', (c) => {
-  const { transactionId } = c;
-  return c.res({
-    image: (
-      <div
-        style={{
-          alignItems: 'center',
-          background: 'white',
-          backgroundSize: '100% 100%',
-          display: 'flex',
-          flexDirection: 'column',
-          flexWrap: 'nowrap',
-          height: '100%',
-          justifyContent: 'center',
-          textAlign: 'center',
-          width: '100%',
-          color: 'white',
-          fontSize: 60,
-          fontFamily: 'Space Mono',
-          fontStyle: 'normal',
-          letterSpacing: '-0.025em',
-          lineHeight: 1.4,
-          marginTop: 0,
-          padding: '0 120px',
-          whiteSpace: 'pre-wrap',
-        }}
-      >
-        <div style={{ alignItems: 'center', color: 'black', display: 'flex', fontSize: 30, flexDirection: 'column', marginBottom: 60 }}>
-            <p style={{ justifyContent: 'center', textAlign: 'center', fontSize: 40}}>🧾 Transaction ID:</p>
-            <p>{transactionId}</p>
+app.frame("/tx-status", async (c) => {
+  const { transactionId, buttonValue } = c;
+ 
+  // The payment transaction hash is passed with transactionId if the user just completed the payment. If the user hit the "Refresh" button, the transaction hash is passed with buttonValue.
+  const txHash = transactionId || buttonValue;
+ 
+  if (!txHash) {
+    throw new Error("missing transaction hash");
+  }
+ 
+  try {
+    let session = await glideClient.getSessionByPaymentTransaction({
+      chainId: Chains.Base.caip2,
+      txHash,
+    });
+ 
+    // Wait for the session to complete. It can take a few seconds
+    session = await glideClient.waitForSession(session.sessionId);
+ 
+    return c.res({
+      image: (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            fontSize: 64,
+            marginTop: "200px",
+          }}
+        >
+          Gifted storage successfully!
         </div>
-      </div>
-    ), 
-    intents: [
-      <Button.Link href="/">🏠 Home</Button.Link>,
-      <Button.Link href={`https://optimistic.etherscan.io/tx/${transactionId}`}>
-      View on Explorer
-    </Button.Link>
-    ]
-  })
-})
+      ),
+      intents: [
+        <Button.Link
+          href={`https://basescan.org/tx/${session.sponsoredTransactionHash}`}
+        >
+          View on Basescan
+        </Button.Link>,
+      ],
+    });
+  } catch (e) {
+    // If the session is not found, it means the payment is still pending.
+    // Let the user know that the payment is pending and show a button to refresh the status.
+    return c.res({
+      image: (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            fontSize: 44,
+            marginTop: "200px",
+          }}
+        >
+          Waiting for payment confirmation..
+        </div>
+      ),
+ 
+      intents: [
+        <Button value={txHash} action="/tx-status">
+          Refresh
+        </Button>,
+      ],
+    });
+  }
+});
 
 
 // Uncomment for local server testing
-// devtools(app, { serveStatic });
+devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)
