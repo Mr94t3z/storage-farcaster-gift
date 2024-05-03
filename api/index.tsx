@@ -501,7 +501,7 @@ async (c) => {
 
   return c.send({
     chainId: Chains.Base.caip2,
-    to: unsignedTransaction.address,
+    to: unsignedTransaction.to,
     data: unsignedTransaction.input,
     value: hexToBigInt(unsignedTransaction.value),
   });
