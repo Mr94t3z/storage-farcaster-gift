@@ -164,31 +164,6 @@ app.frame('/dashboard', async (c) => {
   }
 });
 
-// Handle rate limiting for storage data API
-const storageCache = new Map();
-
-async function getStorageData(fid: any) {
-  if (storageCache.has(fid)) {
-      return storageCache.get(fid);
-  } else {
-      const response = await fetch(`${baseUrl}/storage/usage?fid=${fid}`, {
-          method: 'GET',
-          headers: {
-              'accept': 'application/json',
-              'api_key': 'NEYNAR_API_DOCS',
-          },
-      });
-      if (!response.ok) {
-          console.error('API Error:', response.status, await response.text()); // Log the status and text of the error response
-          throw new Error(`Failed to fetch storage data: ${response.status}`);
-      }
-      const storageData = await response.json();
-      storageCache.set(fid, storageData); // Cache the data
-      return storageData;
-  }
-}
-
-
 app.frame('/show/:fid', async (c) => {
   const { fid } = c.req.param();
 
@@ -202,19 +177,27 @@ app.frame('/show/:fid', async (c) => {
   }
 
   try {
-    // Fetch relevant followers data
-    const followersResponse = await fetch(`https://api.neynar.com/v1/farcaster/following?fid=${fid}&viewerFid=${fid}&limit=15`, {
+    // Fetch relevant followers data (because we are using public trial, so we set limit to 5 to avoid rate limit error)
+    const followersResponse = await fetch(`https://api.neynar.com/v1/farcaster/following?fid=${fid}&viewerFid=${fid}&limit=5`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
-        'api_key': 'NEYNAR_API_DOCS',
+        'api_key': 'NEYNAR_FROG_FM',
       },
     });
     const followersData = await followersResponse.json();
 
     // Extract relevant fields from followers data and add total storage left
     const extractedData = await Promise.all(followersData.result.users.map(async (user: { fid: any; username: any; pfp: { url: any; }; }) => {
-        const storageData = await getStorageData(user.fid);
+        const fid = user.fid;
+        let storageResponse = await fetch(`${baseUrl}/storage/usage?fid=${fid}`, {
+          method: 'GET',
+          headers: {
+            'accept': 'application/json',
+            'api_key': 'NEYNAR_FROG_FM',
+          },
+        });
+        let storageData = await storageResponse.json();
 
         // Calculate total storage left
         const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
@@ -329,7 +312,7 @@ app.frame('/show/:fid', async (c) => {
                   justifyContent: 'center',
                   textAlign: 'center',
                   width: '100%',
-                  color: '#432C8D',
+                  color: 'white',
                   fontFamily: 'Space Mono',
                   fontSize: 35,
                   fontStyle: 'normal',
@@ -439,7 +422,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
                     justifyContent: 'center',
                     textAlign: 'center',
                     width: '100%',
-                    color: '#432C8D',
+                    color: 'white',
                     fontFamily: 'Space Mono',
                     fontSize: 35,
                     fontStyle: 'normal',
