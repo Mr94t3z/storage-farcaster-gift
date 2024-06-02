@@ -24,10 +24,10 @@ A Farcaster Frame is used to locate the people you follow on Farcaster who have 
    ```
 4. Create a `.env` file in the root directory and add the following environment variables:
    ```plaintext
-   BASE_URL_NEYNAR_V1=<Neynar API V1 base URL>
-   BASE_URL_NEYNAR_V2=<Neynar API V2 base URL>
-   NEYNAR_API_KEY=<Your Neynar API key>
-   GLIDE_PROJECT_ID=<Your Glide project ID>
+    GLIDE_PROJECT_ID = "YOUR_GLIDE_PROJECT_ID"
+    NEYNAR_API_KEY = "YOUR_NEYNAR_API_KEY"
+    BASE_URL_NEYNAR_V1 = "https://api.neynar.com/v1/farcaster"
+    BASE_URL_NEYNAR_V2 = "https://api.neynar.com/v2/farcaster"
    ```
 
 ## Usage
