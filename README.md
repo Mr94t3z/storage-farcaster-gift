@@ -12,7 +12,7 @@ A Farcaster Frame is used to locate the people you follow on Farcaster who have 
 ## Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/storage-farcaster-gift.git
+   git clone https://github.com/Mr94t3z/storage-farcaster-gift
    ```
 2. Navigate to the project directory:
    ```bash
