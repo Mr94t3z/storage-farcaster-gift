@@ -155,7 +155,7 @@ app.frame('/dashboard', async (c) => {
           </div>
       ),
       intents: [
-          <Button.Reset>Try Again ⏏︎</Button>,
+          <Button.Reset>Try Again ⏏︎</Button.Reset>,
       ],
   });
   }
