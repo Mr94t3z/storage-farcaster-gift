@@ -27,7 +27,6 @@ async function cacheData(key: string, data: any) {
     cache[key] = data;
 }
 
-
 export const glideClient = createGlideClient({
   projectId: process.env.GLIDE_PROJECT_ID,
  
@@ -59,7 +58,6 @@ let totalPages = 0;
 let currentPage = 1;
 
 // Neynar API base URL
-const baseUrlNeynarV1 = process.env.BASE_URL_NEYNAR_V1;
 const baseUrlNeynarV2 = process.env.BASE_URL_NEYNAR_V2;
 
 app.frame('/', (c) => {
