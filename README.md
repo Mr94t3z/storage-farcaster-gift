@@ -44,6 +44,15 @@ A Farcaster Frame is used to locate the people you follow on Farcaster who have 
 - Glide
 - Vercel
 
+## Sign Up for Glide API Key
+Sign up to get your API key for Glide [here](https://paywithglide.xyz/).
+
+## Neynar API Reference
+Explore the Neynar API reference [here](https://docs.neynar.com/reference/neynar-farcaster-api-overview).
+
+## Frog Framework
+Storage Farcaster Gift is built using the minimal & lightweight framework for Farcaster Frames called [Frog](https://frog.fm/).
+
 ## Demo
 Watch the demo on YouTube: [Storage Farcaster Gift Demo](https://www.youtube.com/watch?v=VBQbbLt75l8)
 
