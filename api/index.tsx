@@ -231,12 +231,13 @@ app.frame('/show/:fid', async (c) => {
                     await cacheData(followingFid, storageData);
                 }
 
-                console.log(storageData);
-
                 if (storageData && storageData.casts && storageData.reactions && storageData.links) {
-                    const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
-                        storageData.reactions.capacity - storageData.reactions.used +
-                        storageData.links.capacity - storageData.links.used;
+
+                    const totalStorageCapacity = (storageData.casts.capacity + storageData.reactions.capacity + storageData.links.capacity) * storageData.total_active_units;
+
+                    const totalStorageUsed = storageData.casts.used + storageData.reactions.used + storageData.links.used;
+
+                    const totalStorageLeft = totalStorageCapacity - totalStorageUsed;
 
                     return {
                         fid: followingFid,
