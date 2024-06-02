@@ -8,8 +8,8 @@ import { encodeFunctionData, hexToBigInt, toHex } from 'viem';
 import dotenv from 'dotenv';
 
 // Uncomment this packages to tested on local server
-import { devtools } from 'frog/dev';
-import { serveStatic } from 'frog/serve-static';
+// import { devtools } from 'frog/dev';
+// import { serveStatic } from 'frog/serve-static';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -19,20 +19,18 @@ export const glideClient = createGlideClient({
  
   // Lists the chains where payments will be accepted
   chains: [Chains.Base, Chains.Optimism],
-  // chains: [base, optimism],
 });
+
+const CAST_INTENS = 
+  "https://warpcast.com/~/compose?text=Storage%20Farcaster%20Gift%20by%20@0x94t3z.eth&embeds[]=https://storage-farcaster-gift.vercel.app/api/frame"
 
 export const app = new Frog({
   assetsPath: '/',
   basePath: '/api/frame',
-  browserLocation: 'https://storage-farcaster-gift.vercel.app/api/frame',
+  browserLocation: CAST_INTENS,
   imageOptions: {
     /* Other default options */
     fonts: [
-      {
-        name: 'Montserrat',
-        source: 'google',
-      },
       {
         name: 'Space Mono',
         source: 'google',
@@ -91,7 +89,7 @@ app.frame('/dashboard', async (c) => {
             justifyContent: 'center',
             textAlign: 'center',
             width: '100%',
-            color: 'black',
+            color: 'white',
             fontFamily: 'Space Mono',
             fontSize: 35,
             fontStyle: 'normal',
@@ -113,13 +111,17 @@ app.frame('/dashboard', async (c) => {
             width={200} 
             height={200} 
           />
-          <p>Hi @{userData.username} ✋🏻</p>
-          <p style={{ color: 'white', margin: '0', justifyContent: 'center', textAlign: 'center', fontSize: 30}}>Click the button bellow to find out who among the people you follow is low on storage.</p>
+          <p>
+            <span style={{ color: 'white' }}>Hi! </span>
+            <span style={{ color: 'black', textDecoration: 'underline' }}>@{userData.username}</span>
+            <span> 🙌🏻</span>
+          </p>
+          <p style={{ color: 'white', margin: '0', justifyContent: 'center', textAlign: 'center', fontSize: 30 }}>Click the search button to find out who among the people you follow is low on storage.</p>
         </div>
       ),
       intents: [
-        <Button action={`/show/${fid}`}>Show User ⇧</Button>,
-        <Button action="/">Cancel ⏏︎</Button>
+        <Button action={`/show/${fid}`}>Search ✅</Button>,
+        <Button.Reset>Cancel ⏏︎</Button.Reset>
       ],
     });
   } catch (error) {
@@ -284,8 +286,8 @@ app.frame('/show/:fid', async (c) => {
         </div>
       ),
       intents: [
-         <Button action={`/gift/${toFid}/${casts_capacity}/${casts_used}/${reactions_capacity}/${reactions_used}/${links_capacity}/${links_used}`}>◉ View</Button>,
-         <Button action="/">Cancel ⏏︎</Button>,
+         <Button action={`/gift/${toFid}/${casts_capacity}/${casts_used}/${reactions_capacity}/${reactions_used}/${links_capacity}/${links_used}`}>View ◉</Button>,
+          <Button.Reset>Cancel ⏏︎</Button.Reset>,
          currentPage > 1 && <Button value="back">← Back</Button>,
         currentPage < totalPages && <Button value="next">Next →</Button>,
       ],
@@ -396,7 +398,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
       ),
       intents: [
         <Button.Transaction target={`/tx-gift/${toFid}`}>Gift Storage 💰</Button.Transaction>,
-        <Button action="/">Cancel ⏏︎</Button>,
+         <Button.Reset>Cancel ⏏︎</Button.Reset>,
       ]
     })
     } catch (error) {
@@ -583,7 +585,7 @@ app.frame("/tx-status", async (c) => {
 
 
 // Uncomment for local server testing
-devtools(app, { serveStatic });
+// devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)
