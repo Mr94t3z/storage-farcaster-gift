@@ -196,39 +196,48 @@ app.frame('/show/:fid', async (c) => {
         });
         let storageData = await storageResponse.json();
 
-        // Calculate total storage left
-        const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
-          storageData.reactions.capacity - storageData.reactions.used +
-          storageData.links.capacity - storageData.links.used;
+        // Check if storageData has the expected structure
+        if (storageData && storageData.casts && storageData.reactions && storageData.links) {
+          // Calculate total storage left
+          const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
+            storageData.reactions.capacity - storageData.reactions.used +
+            storageData.links.capacity - storageData.links.used;
 
-        return {
-          fid: user.fid,
-          username: user.username,
-          pfp_url: user.pfp.url,
-          totalStorageLeft: totalStorageLeft,
-          casts_capacity: storageData.casts.capacity,
-          casts_used: storageData.casts.used,
-          reactions_capacity: storageData.reactions.capacity,
-          reactions_used: storageData.reactions.used,
-          links_capacity: storageData.links.capacity,
-          links_used: storageData.links.used,
-        };
+          return {
+            fid: user.fid,
+            username: user.username,
+            pfp_url: user.pfp.url,
+            totalStorageLeft: totalStorageLeft,
+            casts_capacity: storageData.casts.capacity,
+            casts_used: storageData.casts.used,
+            reactions_capacity: storageData.reactions.capacity,
+            reactions_used: storageData.reactions.used,
+            links_capacity: storageData.links.capacity,
+            links_used: storageData.links.used,
+          };
+        } else {
+          // If storageData is missing expected properties, return null
+          return null;
+        }
     }));
 
+    // Filter out null values
+    const validExtractedData = extractedData.filter(data => data !== null);
+
     // Sort the extracted data in ascending order based on total storage left
-    extractedData.sort((a, b) => a.totalStorageLeft - b.totalStorageLeft);
+    validExtractedData.sort((a, b) => a.totalStorageLeft - b.totalStorageLeft);
 
     // Calculate index range to display data from API
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, extractedData.length);
-    const displayData = extractedData.slice(startIndex, endIndex);
+    const endIndex = Math.min(startIndex + itemsPerPage, validExtractedData.length);
+    const displayData = validExtractedData.slice(startIndex, endIndex);
 
     // Update totalPages based on the current extracted data
-    totalPages = Math.ceil(extractedData.length / itemsPerPage);
+    totalPages = Math.ceil(validExtractedData.length / itemsPerPage);
     // Limit totalPages to 5
     totalPages = Math.min(totalPages, 5);
 
-    // Get the follower choosen to gift storage
+    // Get the follower chosen to gift storage
     const toFid = displayData.length > 0 ? displayData[0].fid : null;
     const casts_capacity = displayData.length > 0 ? displayData[0].casts_capacity : 0;
     const casts_used = displayData.length > 0 ? displayData[0].casts_used : 0;
