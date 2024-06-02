@@ -189,7 +189,7 @@ app.frame('/show/:fid', async (c) => {
     // Extract relevant fields from following data and add total storage left
     const extractedData = await Promise.all(followingData.users.map(async (userData: { user: { fid: any; username: any; pfp_url: any; }; }) => {
       // Check if the user data has the expected structure
-      if (userData && userData.user && userData.user.fid && userData.user.username && userData.user.pfp_url) {
+      if (userData && userData.user && userData.user.fid !== undefined && userData.user.username && userData.user.pfp_url) {
           const fid = userData.user.fid;
           const username = userData.user.username;
           const pfp_url = userData.user.pfp_url;
