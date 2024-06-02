@@ -11,11 +11,6 @@ import dotenv from 'dotenv';
 // import { devtools } from 'frog/dev';
 // import { serveStatic } from 'frog/serve-static';
 
-// Uncomment to use Edge Runtime.
-// export const config = {
-//   runtime: 'edge',
-// }
-
 // Load environment variables from .env file
 dotenv.config();
 
@@ -51,14 +46,15 @@ let totalPages = 0;
 let currentPage = 1;
 
 // Neynar API base URL
-const baseUrl = 'https://api.neynar.com/v2/farcaster';
+const baseUrlNeynarV1 = process.env.BASE_URL_NEYNAR_V1;
+const baseUrlNeynarV2 = process.env.BASE_URL_NEYNAR_V2;
 
 app.frame('/', (c) => {
   currentPage = 1;
   return c.res({
     image: '/storage-farcaster-gift-with-glide.jpeg',
     intents: [
-      <Button action="/dashboard">⎋ Lets Get Started</Button>,
+      <Button action="/dashboard">Start 🎯</Button>,
     ]
   })
 })
@@ -68,11 +64,11 @@ app.frame('/dashboard', async (c) => {
   const { fid } = frameData as unknown as { buttonIndex?: number; fid?: string };
 
   try {
-    const response = await fetch(`${baseUrl}/user/bulk?fids=${fid}&viewer_fid=${fid}`, {
+    const response = await fetch(`${baseUrlNeynarV2}/user/bulk?fids=${fid}&viewer_fid=${fid}`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
-        'api_key': 'NEYNAR_API_DOCS',
+        'api_key': process.env.NEYNAR_API_KEY || '',
       },
     });
 
@@ -85,7 +81,7 @@ app.frame('/dashboard', async (c) => {
         <div
           style={{
             alignItems: 'center',
-            background: 'white',
+            background: '#8863D0',
             backgroundSize: '100% 100%',
             display: 'flex',
             flexDirection: 'column',
@@ -94,7 +90,7 @@ app.frame('/dashboard', async (c) => {
             justifyContent: 'center',
             textAlign: 'center',
             width: '100%',
-            color: 'black',
+            color: 'white',
             fontFamily: 'Space Mono',
             fontSize: 35,
             fontStyle: 'normal',
@@ -103,7 +99,6 @@ app.frame('/dashboard', async (c) => {
             marginTop: 0,
             padding: '0 120px',
             whiteSpace: 'pre-wrap',
-            border: '1em solid rgb(136,99,208)'
           }}
         >
           <img
@@ -117,14 +112,13 @@ app.frame('/dashboard', async (c) => {
             width={200} 
             height={200} 
           />
-          <p>Hi {userData.display_name} ✋🏻</p>
-          Let's find out who among the people you follow is low on storage.
+          <p>Hi @{userData.username} ✋🏻</p>
+          <p style={{ color: 'black', margin: '0', justifyContent: 'center', textAlign: 'center', fontSize: 30}}>Click the button bellow to find out who among the people you follow is low on storage.</p>
         </div>
       ),
       intents: [
-        <Button action={`/show/${fid}`}>⇧ Show User</Button>,
-        <Button action="/dashboard">🔄 Refresh</Button>,
-        <Button action="/">⏏︎ Cancel</Button>
+        <Button action={`/show/${fid}`}>Show User ⇧</Button>,
+        <Button action="/">Cancel ⏏︎</Button>
       ],
     });
   } catch (error) {
@@ -134,7 +128,7 @@ app.frame('/dashboard', async (c) => {
           <div
               style={{
                   alignItems: 'center',
-                  background: 'rgb(136,99,208)',
+                  background: '#8863D0',
                   backgroundSize: '100% 100%',
                   display: 'flex',
                   flexDirection: 'column',
@@ -158,7 +152,7 @@ app.frame('/dashboard', async (c) => {
           </div>
       ),
       intents: [
-          <Button action='/'>⏏︎ Try Again</Button>,
+          <Button action='/'>Try Again ⏏︎</Button>,
       ],
   });
   }
@@ -178,11 +172,11 @@ app.frame('/show/:fid', async (c) => {
 
   try {
     // Fetch relevant followers data (because we are using public trial, so we set limit to 5 to avoid rate limit error)
-    const followersResponse = await fetch(`https://api.neynar.com/v1/farcaster/following?fid=${fid}&viewerFid=${fid}&limit=5`, {
+    const followersResponse = await fetch(`${baseUrlNeynarV1}/following?fid=${fid}&viewerFid=${fid}&limit=5`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
-        'api_key': 'NEYNAR_FROG_FM',
+        'api_key': process.env.NEYNAR_API_KEY || '',
       },
     });
     const followersData = await followersResponse.json();
@@ -190,11 +184,11 @@ app.frame('/show/:fid', async (c) => {
     // Extract relevant fields from followers data and add total storage left
     const extractedData = await Promise.all(followersData.result.users.map(async (user: { fid: any; username: any; pfp: { url: any; }; }) => {
         const fid = user.fid;
-        let storageResponse = await fetch(`${baseUrl}/storage/usage?fid=${fid}`, {
+        let storageResponse = await fetch(`${baseUrlNeynarV2}/storage/usage?fid=${fid}`, {
           method: 'GET',
           headers: {
             'accept': 'application/json',
-            'api_key': 'NEYNAR_FROG_FM',
+            'api_key': process.env.NEYNAR_API_KEY || '',
           },
         });
         let storageData = await storageResponse.json();
@@ -245,7 +239,7 @@ app.frame('/show/:fid', async (c) => {
       image: (
         <div style={{
             alignItems: 'center',
-            background: 'white',
+            background: '#8863D0',
             backgroundSize: '100% 100%',
             display: 'flex',
             flexDirection: 'column',
@@ -254,7 +248,7 @@ app.frame('/show/:fid', async (c) => {
             justifyContent: 'center',
             textAlign: 'center',
             width: '100%',
-            color: 'black',
+            color: 'white',
             fontFamily: 'Space Mono',
             fontSize: 35,
             fontStyle: 'normal',
@@ -263,10 +257,9 @@ app.frame('/show/:fid', async (c) => {
             marginTop: 0,
             padding: '0 120px',
             whiteSpace: 'pre-wrap',
-            border: '1em solid rgb(136,99,208)'
           }}>
            {displayData.map((follower, index) => (
-            <div key={index} style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'black', display: 'flex', fontSize: 30, flexDirection: 'column', marginBottom: 20 }}>
+            <div key={index} style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'white', display: 'flex', fontSize: 30, flexDirection: 'column', marginBottom: 20 }}>
               <img
                   src={follower.pfp_url.toLowerCase().endsWith('.webp') ? '/images/no_avatar.png' : follower.pfp_url}
                   style={{
@@ -279,7 +272,7 @@ app.frame('/show/:fid', async (c) => {
                   height={200}
                   alt="Profile Picture"
               />
-              <p style={{ color: "#432C8D", justifyContent: 'center', textAlign: 'center', fontSize: 40}}>@{follower.username}</p>
+              <p style={{ color: "black", justifyContent: 'center', textAlign: 'center', fontSize: 40}}>@{follower.username}</p>
               {follower.totalStorageLeft <= 0 ? (
                 <p>💾 Out of storage!</p>
               ) : (
@@ -291,7 +284,7 @@ app.frame('/show/:fid', async (c) => {
       ),
       intents: [
          <Button action={`/gift/${toFid}/${casts_capacity}/${casts_used}/${reactions_capacity}/${reactions_used}/${links_capacity}/${links_used}`}>◉ View</Button>,
-         <Button action="/">⏏︎ Cancel</Button>,
+         <Button action="/">Cancel ⏏︎</Button>,
          currentPage > 1 && <Button value="back">← Back</Button>,
         currentPage < totalPages && <Button value="next">Next →</Button>,
       ],
@@ -303,7 +296,7 @@ app.frame('/show/:fid', async (c) => {
           <div
               style={{
                   alignItems: 'center',
-                  background: 'rgb(136,99,208)',
+                  background: '#8863D0',
                   backgroundSize: '100% 100%',
                   display: 'flex',
                   flexDirection: 'column',
@@ -327,7 +320,7 @@ app.frame('/show/:fid', async (c) => {
           </div>
       ),
       intents: [
-          <Button action='/'>⏏︎ Try Again</Button>,
+          <Button action='/'>Try Again ⏏︎</Button>,
       ],
   });
   }
@@ -338,11 +331,11 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
   const { toFid, casts_capacity, casts_used, reactions_capacity, reactions_used, links_capacity, links_used } = c.req.param();
 
   try {
-    const response = await fetch(`${baseUrl}/user/bulk?fids=${toFid}&viewer_fid=${toFid}`, {
+    const response = await fetch(`${baseUrlNeynarV2}/user/bulk?fids=${toFid}&viewer_fid=${toFid}`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
-        'api_key': 'NEYNAR_API_DOCS',
+        'api_key': process.env.NEYNAR_API_KEY || '',
       },
     });
 
@@ -355,7 +348,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
         <div
             style={{
               alignItems: 'center',
-              background: 'white',
+              background: '#8863D0',
               backgroundSize: '100% 100%',
               display: 'flex',
               flexDirection: 'column',
@@ -364,7 +357,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
               justifyContent: 'center',
               textAlign: 'center',
               width: '100%',
-              color: '#432C8D',
+              color: 'black',
               fontFamily: 'Space Mono',
               fontSize: 35,
               fontStyle: 'normal',
@@ -373,7 +366,6 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
               marginTop: 0,
               padding: '0 120px',
               whiteSpace: 'pre-wrap',
-              border: '1em solid rgb(136,99,208)'
             }}
           >
             <img
@@ -385,25 +377,25 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
                 boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
               }}
             />
-            <p style={{ margin: 15 }}>💾 Capacity</p>
-            <p style={{ color: "#432C8D", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
+            <p style={{ marginTop: 30, marginBottom: 15 }}>💾 Capacity</p>
+            <p style={{ color: "white", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
               Casts {casts_used} of {casts_capacity}
             </p>
 
-            <p style={{ color: "#432C8D", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
+            <p style={{ color: "white", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
               Reactions {reactions_used} of {reactions_capacity}
             </p>
 
-            <p style={{ color: "#432C8D", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
+            <p style={{ color: "white", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
               Follows {links_used} of {links_capacity}
             </p>
 
-            <p style={{ margin: 15 }}>🎁 Gift Storage to @{userData.username}?</p>
+            <p style={{ margin: 30 }}>🎁 Gift Storage to @{userData.username}?</p>
           </div>
       ),
       intents: [
-        <Button.Transaction target={`/tx-gift/${toFid}`}>💰 Gift Storage</Button.Transaction>,
-        <Button action="/">⏏︎ Cancel</Button>,
+        <Button.Transaction target={`/tx-gift/${toFid}`}>Gift Storage 💰</Button.Transaction>,
+        <Button action="/">Cancel ⏏︎</Button>,
       ]
     })
     } catch (error) {
@@ -437,7 +429,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
             </div>
         ),
         intents: [
-            <Button action='/'>⏏︎ Try Again</Button>,
+            <Button action='/'>Try Again ⏏︎</Button>,
         ],
     });
     }
