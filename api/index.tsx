@@ -18,13 +18,14 @@ export const glideClient = createGlideClient({
   projectId: process.env.GLIDE_PROJECT_ID,
  
   // Lists the chains where payments will be accepted
-  chains: [Chains.Base],
+  chains: [Chains.Base, Chains.Optimism],
   // chains: [base, optimism],
 });
 
 export const app = new Frog({
   assetsPath: '/',
   basePath: '/api/frame',
+  browserLocation: 'https://storage-farcaster-gift.vercel.app/api/frame',
   imageOptions: {
     /* Other default options */
     fonts: [
@@ -405,7 +406,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
             <div
                 style={{
                     alignItems: 'center',
-                    background: 'rgb(136,99,208)',
+                    background: '#8863D0',
                     backgroundSize: '100% 100%',
                     display: 'flex',
                     flexDirection: 'column',
@@ -506,10 +507,25 @@ app.frame("/tx-status", async (c) => {
       image: (
         <div
           style={{
-            display: "flex",
-            justifyContent: "center",
-            fontSize: 64,
-            marginTop: "200px",
+            alignItems: 'center',
+            background: '#8863D0',
+            backgroundSize: '100% 100%',
+            display: 'flex',
+            flexDirection: 'column',
+            flexWrap: 'nowrap',
+            height: '100%',
+            justifyContent: 'center',
+            textAlign: 'center',
+            width: '100%',
+            color: 'white',
+            fontFamily: 'Space Mono',
+            fontSize: 35,
+            fontStyle: 'normal',
+            letterSpacing: '-0.025em',
+            lineHeight: 1.4,
+            marginTop: 0,
+            padding: '0 120px',
+            whiteSpace: 'pre-wrap',
           }}
         >
           Gifted storage successfully!
@@ -521,6 +537,7 @@ app.frame("/tx-status", async (c) => {
         >
           View on Basescan
         </Button.Link>,
+        <Button action="/">Home ⏏︎</Button>,
       ],
     });
   } catch (e) {
@@ -530,10 +547,25 @@ app.frame("/tx-status", async (c) => {
       image: (
         <div
           style={{
-            display: "flex",
-            justifyContent: "center",
-            fontSize: 44,
-            marginTop: "200px",
+            alignItems: 'center',
+            background: '#8863D0',
+            backgroundSize: '100% 100%',
+            display: 'flex',
+            flexDirection: 'column',
+            flexWrap: 'nowrap',
+            height: '100%',
+            justifyContent: 'center',
+            textAlign: 'center',
+            width: '100%',
+            color: 'white',
+            fontFamily: 'Space Mono',
+            fontSize: 35,
+            fontStyle: 'normal',
+            letterSpacing: '-0.025em',
+            lineHeight: 1.4,
+            marginTop: 0,
+            padding: '0 120px',
+            whiteSpace: 'pre-wrap',
           }}
         >
           Waiting for payment confirmation..
