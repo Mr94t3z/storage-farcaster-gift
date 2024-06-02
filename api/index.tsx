@@ -155,15 +155,14 @@ app.frame('/dashboard', async (c) => {
           </div>
       ),
       intents: [
-          <Button action='/'>Try Again ⏏︎</Button>,
+          <Button.Reset>Try Again ⏏︎</Button>,
       ],
   });
   }
 });
 
-app.frame('/show/:fid', async (c) => {
-  const { fid } = c.req.param();
 
+app.frame('/show/:fid', async (c) => {
   const { buttonValue } = c;
 
   // Handle navigation logic
@@ -174,6 +173,7 @@ app.frame('/show/:fid', async (c) => {
   }
 
   try {
+    const { fid } = c.req.param();
     // Fetch relevant following data (because we are using public trial, so we set limit to 100 to avoid rate limit error)
     const followingResponse = await fetch(`${baseUrlNeynarV2}/following?fid=${fid}&viewerFid=${fid}&limit=100`, {
       method: 'GET',
