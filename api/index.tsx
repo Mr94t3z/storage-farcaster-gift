@@ -163,6 +163,8 @@ app.frame('/dashboard', async (c) => {
 
 
 app.frame('/show/:fid', async (c) => {
+  const { fid } = c.req.param();
+
   const { buttonValue } = c;
 
   // Handle navigation logic
@@ -173,7 +175,6 @@ app.frame('/show/:fid', async (c) => {
   }
 
   try {
-    const { fid } = c.req.param();
     // Fetch relevant following data (because we are using public trial, so we set limit to 100 to avoid rate limit error)
     const followingResponse = await fetch(`${baseUrlNeynarV2}/following?fid=${fid}&viewerFid=${fid}&limit=100`, {
       method: 'GET',
@@ -184,8 +185,6 @@ app.frame('/show/:fid', async (c) => {
     });
     const followingData = await followingResponse.json();
 
-    console.log(followingData);
-
     // Extract relevant fields from following data and add total storage left
     const extractedData = await Promise.all(followingData.users.map(async (userData: { user: { fid: any; username: any; pfp_url: any; }; }) => {
       // Check if the user data has the expected structure
@@ -193,6 +192,8 @@ app.frame('/show/:fid', async (c) => {
           const fid = userData.user.fid;
           const username = userData.user.username;
           const pfp_url = userData.user.pfp_url;
+
+          console.log(fid, username, pfp_url)
   
           let storageResponse = await fetch(`${baseUrlNeynarV2}/storage/usage?fid=${fid}`, {
               method: 'GET',
