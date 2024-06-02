@@ -63,7 +63,7 @@ app.frame('/dashboard', async (c) => {
   const { fid } = frameData as unknown as { buttonIndex?: number; fid?: string };
 
   try {
-    const response = await fetch(`${baseUrlNeynarV2}/user/bulk?fids=${fid}&viewer_fid=${fid}`, {
+    const response = await fetch(`${baseUrlNeynarV2}/user/bulk?fids=${fid}`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
@@ -256,7 +256,6 @@ app.frame('/show/:fid', async (c) => {
     const links_used = displayData.length > 0 ? displayData[0].links_used : 0;
 
     return c.res({
-      action: `/show/${fid}`, // Set action to stay on the same route
       image: (
         <div style={{
             alignItems: 'center',
