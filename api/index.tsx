@@ -581,14 +581,14 @@ app.frame("/tx-status", async (c) => {
             whiteSpace: 'pre-wrap',
           }}
         >
-          Gifted storage successfully!
+          Storage gifted successfully!
         </div>
       ),
       intents: [
         <Button.Link
-          href={`https://basescan.org/tx/${session.sponsoredTransactionHash}`}
+          href={`https://optimistic.etherscan.io/tx/${session.sponsoredTransactionHash}`}
         >
-          View on Basescan
+          View on Exploler
         </Button.Link>,
         <Button action="/">Home ⏏︎</Button>,
       ],
