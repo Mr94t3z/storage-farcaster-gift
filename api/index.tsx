@@ -213,7 +213,7 @@ app.frame('/show/:fid', async (c) => {
                   storageData.links.capacity - storageData.links.used;
   
               return {
-                  fid: fid,
+                  fid: followingFid,
                   username: username,
                   pfp_url: pfp_url,
                   totalStorageLeft: totalStorageLeft,
