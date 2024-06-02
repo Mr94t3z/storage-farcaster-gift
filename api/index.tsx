@@ -8,8 +8,8 @@ import { encodeFunctionData, hexToBigInt, toHex } from 'viem';
 import dotenv from 'dotenv';
 
 // Uncomment this packages to tested on local server
-import { devtools } from 'frog/dev';
-import { serveStatic } from 'frog/serve-static';
+// import { devtools } from 'frog/dev';
+// import { serveStatic } from 'frog/serve-static';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -510,7 +510,7 @@ async (c) => {
    
     // Optional. Setting this restricts the user to only
     // pay with the specified currency.
-    paymentCurrency: CurrenciesByChain.OptimismMainnet.ETH,
+    paymentCurrency: CurrenciesByChain.BaseMainnet.ETH,
     
     transaction: {
       chainId: Chains.Optimism.caip2,
@@ -636,7 +636,7 @@ app.frame("/tx-status", async (c) => {
 
 
 // Uncomment for local server testing
-devtools(app, { serveStatic });
+// devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)
