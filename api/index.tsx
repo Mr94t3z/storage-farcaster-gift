@@ -175,8 +175,8 @@ app.frame('/show/:fid', async (c) => {
   }
 
   try {
-    // Fetch relevant following data (because we are using public trial, so we set limit to 5 to avoid rate limit error)
-    const followingResponse = await fetch(`${baseUrlNeynarV2}/following?fid=${fid}&limit=5`, {
+    // Fetch relevant following data (because we are using public trial, so we set limit to 100 to avoid rate limit error)
+    const followingResponse = await fetch(`${baseUrlNeynarV2}/following?fid=${fid}&limit=100`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
@@ -185,51 +185,66 @@ app.frame('/show/:fid', async (c) => {
     });
     const followingData = await followingResponse.json();
 
-    // Extract relevant fields from following data and add total storage left
-    const extractedData = await Promise.all(followingData.users.map(async (userData: { user: { fid: any; username: any; pfp_url: any; }; }) => {
-      // Check if the user data has the expected structure
-      if (userData && userData.user && userData.user.fid !== undefined && userData.user.username && userData.user.pfp_url) {
-          const followingFid = userData.user.fid;
-          const username = userData.user.username;
-          const pfp_url = userData.user.pfp_url;
-  
-          let storageResponse = await fetch(`${baseUrlNeynarV2}/storage/usage?fid=${followingFid}`, {
-              method: 'GET',
-              headers: {
-                  'accept': 'application/json',
-                  'api_key': process.env.NEYNAR_API_KEY || '',
-              },
-          });
+    const chunkSize = 15; // Set the chunk size for batch checking
 
-          let storageData = await storageResponse.json();
+    // Divide the list of users into smaller chunks
+    const chunkedUsers = [];
+    for (let i = 0; i < followingData.users.length; i += chunkSize) {
+        chunkedUsers.push(followingData.users.slice(i, i + chunkSize));
+    }
 
-          console.log(storageData);
-  
-          // Check if storageData has the expected structure
-          if (storageData && storageData.casts && storageData.reactions && storageData.links) {
-              // Calculate total storage left
-              const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
-                  storageData.reactions.capacity - storageData.reactions.used +
-                  storageData.links.capacity - storageData.links.used;
-  
-              return {
-                  fid: followingFid,
-                  username: username,
-                  pfp_url: pfp_url,
-                  totalStorageLeft: totalStorageLeft,
-                  casts_capacity: storageData.casts.capacity,
-                  casts_used: storageData.casts.used,
-                  reactions_capacity: storageData.reactions.capacity,
-                  reactions_used: storageData.reactions.used,
-                  links_capacity: storageData.links.capacity,
-                  links_used: storageData.links.used,
-              };
-          }
-      } else {
-          console.log("User data is missing necessary properties.");
-          return null; // Return null for users with missing properties
-      }
-    }));
+    // Array to store promises for storage requests
+    const storagePromises = [];
+
+    // Iterate over each chunk and make separate requests for storage data
+    for (const chunk of chunkedUsers) {
+        const chunkPromises = chunk.map(async (userData: { user: { fid: undefined; username: any; pfp_url: any; }; }) => {
+            if (userData && userData.user && userData.user.fid !== undefined && userData.user.username && userData.user.pfp_url) {
+                const followingFid = userData.user.fid;
+                const username = userData.user.username;
+                const pfp_url = userData.user.pfp_url;
+
+                const storageResponse = await fetch(`${baseUrlNeynarV2}/storage/usage?fid=${followingFid}`, {
+                    method: 'GET',
+                    headers: {
+                        'accept': 'application/json',
+                        'api_key': process.env.NEYNAR_API_KEY || '',
+                    },
+                });
+                const storageData = await storageResponse.json();
+
+                console.log(storageData);
+
+                if (storageData && storageData.casts && storageData.reactions && storageData.links) {
+                    const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
+                        storageData.reactions.capacity - storageData.reactions.used +
+                        storageData.links.capacity - storageData.links.used;
+
+                    return {
+                        fid: followingFid,
+                        username: username,
+                        pfp_url: pfp_url,
+                        totalStorageLeft: totalStorageLeft,
+                        casts_capacity: storageData.casts.capacity,
+                        casts_used: storageData.casts.used,
+                        reactions_capacity: storageData.reactions.capacity,
+                        reactions_used: storageData.reactions.used,
+                        links_capacity: storageData.links.capacity,
+                        links_used: storageData.links.used,
+                    };
+                }
+            } else {
+                console.log("User data is missing necessary properties.");
+                return null; // Return null for users with missing properties
+            }
+        });
+
+        // Add promises for storage requests in this chunk to the main array
+        storagePromises.push(...chunkPromises);
+    }
+
+    // Wait for all storage requests to complete
+    const extractedData = await Promise.all(storagePromises);
 
     // Filter out null values
     const validExtractedData = extractedData.filter(data => data !== null);
