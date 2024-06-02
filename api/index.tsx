@@ -14,6 +14,20 @@ import { serveStatic } from 'frog/serve-static';
 // Load environment variables from .env file
 dotenv.config();
 
+// Define an in-memory cache object
+const cache: Record<string, any> = {};
+
+// Function to retrieve data from cache
+async function getFromCache(key: string) {
+    return cache[key];
+}
+
+// Function to cache data
+async function cacheData(key: string, data: any) {
+    cache[key] = data;
+}
+
+
 export const glideClient = createGlideClient({
   projectId: process.env.GLIDE_PROJECT_ID,
  
@@ -185,9 +199,8 @@ app.frame('/show/:fid', async (c) => {
     });
     const followingData = await followingResponse.json();
 
-    const chunkSize = 15; // Set the chunk size for batch checking
-
-    // Divide the list of users into smaller chunks
+    // Batch processing
+    const chunkSize = 15;
     const chunkedUsers = [];
     for (let i = 0; i < followingData.users.length; i += chunkSize) {
         chunkedUsers.push(followingData.users.slice(i, i + chunkSize));
@@ -204,14 +217,21 @@ app.frame('/show/:fid', async (c) => {
                 const username = userData.user.username;
                 const pfp_url = userData.user.pfp_url;
 
-                const storageResponse = await fetch(`${baseUrlNeynarV2}/storage/usage?fid=${followingFid}`, {
-                    method: 'GET',
-                    headers: {
-                        'accept': 'application/json',
-                        'api_key': process.env.NEYNAR_API_KEY || '',
-                    },
-                });
-                const storageData = await storageResponse.json();
+                // Check if storage data is already cached
+                let storageData = await getFromCache(followingFid);
+                if (!storageData) {
+                    const storageResponse = await fetch(`${baseUrlNeynarV2}/storage/usage?fid=${followingFid}`, {
+                        method: 'GET',
+                        headers: {
+                            'accept': 'application/json',
+                            'api_key': process.env.NEYNAR_API_KEY || '',
+                        },
+                    });
+                    storageData = await storageResponse.json();
+
+                    // Cache the storage data
+                    await cacheData(followingFid, storageData);
+                }
 
                 console.log(storageData);
 
