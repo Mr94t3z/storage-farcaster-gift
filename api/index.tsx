@@ -8,8 +8,8 @@ import { encodeFunctionData, hexToBigInt, toHex } from 'viem';
 import dotenv from 'dotenv';
 
 // Uncomment this packages to tested on local server
-// import { devtools } from 'frog/dev';
-// import { serveStatic } from 'frog/serve-static';
+import { devtools } from 'frog/dev';
+import { serveStatic } from 'frog/serve-static';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -174,50 +174,50 @@ app.frame('/show/:fid', async (c) => {
   }
 
   try {
-    // Fetch relevant followers data (because we are using public trial, so we set limit to 5 to avoid rate limit error)
-    const followersResponse = await fetch(`${baseUrlNeynarV2}/following?fid=${fid}&viewerFid=${fid}&limit=100`, {
+    // Fetch relevant following data (because we are using public trial, so we set limit to 100 to avoid rate limit error)
+    const followingResponse = await fetch(`${baseUrlNeynarV2}/following?fid=${fid}&viewerFid=${fid}&limit=2`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
         'api_key': process.env.NEYNAR_API_KEY || '',
       },
     });
-    const followersData = await followersResponse.json();
+    const followingData = await followingResponse.json();
 
-    // Extract relevant fields from followers data and add total storage left
-    const extractedData = await Promise.all(followersData.result.users.map(async (user: { fid: any; username: any; pfp: { url: any; }; }) => {
-        const fid = user.fid;
-        let storageResponse = await fetch(`${baseUrlNeynarV2}/storage/usage?fid=${fid}`, {
+    console.log(followingData);
+
+    // Extract relevant fields from following data and add total storage left
+    const extractedData = await Promise.all(followingData.users.map(async (user: { user: { fid: any; username: any; pfp_url: any; }; }) => {
+      const fid = user.user.fid;
+  
+      let storageResponse = await fetch(`${baseUrlNeynarV2}/storage/usage?fid=${fid}`, {
           method: 'GET',
           headers: {
-            'accept': 'application/json',
-            'api_key': process.env.NEYNAR_API_KEY || '',
+              'accept': 'application/json',
+              'api_key': process.env.NEYNAR_API_KEY || '',
           },
-        });
-        let storageData = await storageResponse.json();
-
-        // Check if storageData has the expected structure
-        if (storageData && storageData.casts && storageData.reactions && storageData.links) {
+      });
+      let storageData = await storageResponse.json();
+  
+      // Check if storageData has the expected structure
+      if (storageData && storageData.casts && storageData.reactions && storageData.links) {
           // Calculate total storage left
           const totalStorageLeft = storageData.casts.capacity - storageData.casts.used +
-            storageData.reactions.capacity - storageData.reactions.used +
-            storageData.links.capacity - storageData.links.used;
-
+              storageData.reactions.capacity - storageData.reactions.used +
+              storageData.links.capacity - storageData.links.used;
+  
           return {
-            fid: user.fid,
-            username: user.username,
-            pfp_url: user.pfp.url,
-            totalStorageLeft: totalStorageLeft,
-            casts_capacity: storageData.casts.capacity,
-            casts_used: storageData.casts.used,
-            reactions_capacity: storageData.reactions.capacity,
-            reactions_used: storageData.reactions.used,
-            links_capacity: storageData.links.capacity,
-            links_used: storageData.links.used,
+              fid: user.user.fid,
+              username: user.user.username,
+              pfp_url: user.user.pfp_url,
+              totalStorageLeft: totalStorageLeft,
+              casts_capacity: storageData.casts.capacity,
+              casts_used: storageData.casts.used,
+              reactions_capacity: storageData.reactions.capacity,
+              reactions_used: storageData.reactions.used,
+              links_capacity: storageData.links.capacity,
+              links_used: storageData.links.used,
           };
-        } else {
-          // If storageData is missing expected properties, return null
-          return null;
         }
     }));
 
@@ -332,7 +332,7 @@ app.frame('/show/:fid', async (c) => {
           </div>
       ),
       intents: [
-          <Button action='/'>Try Again ⏏︎</Button>,
+          <Button.Reset>Try Again ⏏︎</Button.Reset>,
       ],
   });
   }
@@ -441,7 +441,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
             </div>
         ),
         intents: [
-            <Button action='/'>Try Again ⏏︎</Button>,
+            <Button.Reset>Try Again ⏏︎</Button.Reset>,
         ],
     });
     }
@@ -594,7 +594,7 @@ app.frame("/tx-status", async (c) => {
 
 
 // Uncomment for local server testing
-// devtools(app, { serveStatic });
+devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)
