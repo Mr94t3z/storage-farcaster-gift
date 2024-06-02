@@ -175,8 +175,8 @@ app.frame('/show/:fid', async (c) => {
   }
 
   try {
-    // Fetch relevant following data (because we are using public trial, so we set limit to 100 to avoid rate limit error)
-    const followingResponse = await fetch(`${baseUrlNeynarV2}/following?fid=${fid}&limit=100`, {
+    // Fetch relevant following data (because we are using public trial, so we set limit to 5 to avoid rate limit error)
+    const followingResponse = await fetch(`${baseUrlNeynarV2}/following?fid=${fid}&limit=5`, {
       method: 'GET',
       headers: {
         'accept': 'application/json',
