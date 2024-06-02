@@ -8,8 +8,8 @@ import { encodeFunctionData, hexToBigInt, toHex } from 'viem';
 import dotenv from 'dotenv';
 
 // Uncomment this packages to tested on local server
-// import { devtools } from 'frog/dev';
-// import { serveStatic } from 'frog/serve-static';
+import { devtools } from 'frog/dev';
+import { serveStatic } from 'frog/serve-static';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -91,7 +91,7 @@ app.frame('/dashboard', async (c) => {
             justifyContent: 'center',
             textAlign: 'center',
             width: '100%',
-            color: 'white',
+            color: 'black',
             fontFamily: 'Space Mono',
             fontSize: 35,
             fontStyle: 'normal',
@@ -114,7 +114,7 @@ app.frame('/dashboard', async (c) => {
             height={200} 
           />
           <p>Hi @{userData.username} ✋🏻</p>
-          <p style={{ color: 'black', margin: '0', justifyContent: 'center', textAlign: 'center', fontSize: 30}}>Click the button bellow to find out who among the people you follow is low on storage.</p>
+          <p style={{ color: 'white', margin: '0', justifyContent: 'center', textAlign: 'center', fontSize: 30}}>Click the button bellow to find out who among the people you follow is low on storage.</p>
         </div>
       ),
       intents: [
@@ -583,7 +583,7 @@ app.frame("/tx-status", async (c) => {
 
 
 // Uncomment for local server testing
-// devtools(app, { serveStatic });
+devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)
