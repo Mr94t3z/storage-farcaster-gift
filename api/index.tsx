@@ -1,10 +1,9 @@
 import { Button, Frog } from 'frog'
 import { handle } from 'frog/vercel'
-// import { storageRegistry } from "../lib/contracts.js";
-import { abi } from "../lib/storageAbiBot.js";
+import { storageRegistry } from "../lib/contracts.js";
 import fetch from 'node-fetch';
 import { createGlideClient, Chains, CurrenciesByChain } from "@paywithglide/glide-js";
-import { encodeFunctionData, hexToBigInt, toHex } from 'viem';
+import { encodeFunctionData, hexToBigInt } from 'viem';
 import dotenv from 'dotenv';
 
 // Uncomment this packages to tested on local server
@@ -525,6 +524,10 @@ async (c) => {
   const { address } = c;
   const { toFid } = c.req.param();
 
+  // Get current storage price
+  const units = 1n;
+  const price = await storageRegistry.read.price([units]);
+
   const { unsignedTransaction } = await glideClient.createSession({
     payerWalletAddress: address,
    
@@ -534,11 +537,11 @@ async (c) => {
     
     transaction: {
       chainId: Chains.Optimism.caip2,
-      to: "0x511372B44231a31527025a3D273C1dc0a83D77aF",
-      value: toHex(1313000000000000n),
+      to: storageRegistry.address,
+      value: price,
       input: encodeFunctionData({
-        abi: abi,
-        functionName: "subscribe",
+        abi: storageRegistry.abi,
+        functionName: "rent",
         args: [BigInt(toFid), 1n],
       }),
     },
