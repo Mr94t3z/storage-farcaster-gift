@@ -233,7 +233,8 @@ app.frame('/show/:fid', async (c) => {
 
                 if (storageData && storageData.casts && storageData.reactions && storageData.links) {
 
-                    const totalStorageCapacity = (storageData.casts.capacity + storageData.reactions.capacity + storageData.links.capacity) * storageData.total_active_units;
+                    // const totalStorageCapacity = (storageData.casts.capacity + storageData.reactions.capacity + storageData.links.capacity) * storageData.total_active_units;
+                    const totalStorageCapacity = storageData.casts.capacity + storageData.reactions.capacity + storageData.links.capacity;
 
                     const totalStorageUsed = storageData.casts.used + storageData.reactions.used + storageData.links.used;
 
@@ -327,7 +328,9 @@ app.frame('/show/:fid', async (c) => {
                   height={200}
                   alt="Profile Picture"
               />
-              <p style={{ color: "black", justifyContent: 'center', textAlign: 'center', fontSize: 40}}>@{follower.username}</p>
+              <p style={{ color: "black", justifyContent: 'center', textAlign: 'center', fontSize: 40, textDecoration: 'underline' }}> @{follower.username} </p>
+              <p>
+          </p>
               {follower.totalStorageLeft <= 0 ? (
                 <p>💾 Out of storage!</p>
               ) : (
@@ -397,8 +400,10 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
     const data = await response.json();
     const userData = data.users[0];
 
+    const username = userData.username;
+
     return c.res({
-      action: '/tx-status',
+      action: `/tx-status/${username}`,
       image: (
         <div
             style={{
@@ -444,8 +449,11 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
             <p style={{ color: "white", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
               Follows {links_used} of {links_capacity}
             </p>
-
-            <p style={{ margin: 30 }}>🎁 Gift Storage to @{userData.username}?</p>
+            <p>
+              <span style={{ margin: 30, color: 'white' }}>🎁 Gift Storage to </span>
+              <span style={{ color: 'black', textDecoration: 'underline' }}>@{userData.username}</span>
+              <span> ?</span>
+            </p>
           </div>
       ),
       intents: [
@@ -538,7 +546,8 @@ async (c) => {
 })
 
 
-app.frame("/tx-status", async (c) => {
+app.frame("/tx-status/:username", async (c) => {
+  const { username } = c.req.param();
   const { transactionId, buttonValue } = c;
  
   // The payment transaction hash is passed with transactionId if the user just completed the payment. If the user hit the "Refresh" button, the transaction hash is passed with buttonValue.
@@ -582,7 +591,11 @@ app.frame("/tx-status", async (c) => {
             whiteSpace: 'pre-wrap',
           }}
         >
-          Storage gifted successfully!
+          <p>
+              <span style={{ color: 'white' }}>Storage successfully gifted to</span>
+              <span style={{ color: 'black', textDecoration: 'underline' }}>@{username}</span>
+              <span>!</span>
+          </p>
         </div>
       ),
       intents: [

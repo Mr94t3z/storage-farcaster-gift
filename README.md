@@ -39,7 +39,7 @@ A Farcaster Frame is used to locate the people you follow on Farcaster who have 
 ## Technologies Used
 - Node.js
 - Frog
-- Neynar API
+- Neynar
 - Glide
 - Vercel
 
