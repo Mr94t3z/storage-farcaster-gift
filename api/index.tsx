@@ -92,7 +92,7 @@ app.frame('/dashboard', async (c) => {
         <div
           style={{
             alignItems: 'center',
-            background: '#8863D0',
+            background: '#11365D',
             backgroundSize: '100% 100%',
             display: 'flex',
             flexDirection: 'column',
@@ -124,11 +124,11 @@ app.frame('/dashboard', async (c) => {
             height={200} 
           />
           <p>
-            <span style={{ color: 'white' }}>Hi! </span>
+            <span style={{ color: 'white' }}>Hi, </span>
             <span style={{ color: 'black', textDecoration: 'underline' }}>@{userData.username}</span>
             <span> 🙌🏻</span>
           </p>
-          <p style={{ color: 'white', margin: '0', justifyContent: 'center', textAlign: 'center', fontSize: 30 }}>Click the search button to find out who among the people you follow is low on storage.</p>
+          <p style={{ color: 'orange', margin: '0', justifyContent: 'center', textAlign: 'center', fontSize: 30 }}>Click the search button to find out who among the people you follow is low on storage.</p>
         </div>
       ),
       intents: [
@@ -143,7 +143,7 @@ app.frame('/dashboard', async (c) => {
           <div
               style={{
                   alignItems: 'center',
-                  background: '#8863D0',
+                  background: '#11365D',
                   backgroundSize: '100% 100%',
                   display: 'flex',
                   flexDirection: 'column',
@@ -152,7 +152,7 @@ app.frame('/dashboard', async (c) => {
                   justifyContent: 'center',
                   textAlign: 'center',
                   width: '100%',
-                  color: '#432C8D',
+                  color: '#FD274A',
                   fontFamily: 'Space Mono',
                   fontSize: 35,
                   fontStyle: 'normal',
@@ -295,7 +295,7 @@ app.frame('/show/:fid', async (c) => {
       image: (
         <div style={{
             alignItems: 'center',
-            background: '#8863D0',
+            background: '#11365D',
             backgroundSize: '100% 100%',
             display: 'flex',
             flexDirection: 'column',
@@ -328,13 +328,16 @@ app.frame('/show/:fid', async (c) => {
                   height={200}
                   alt="Profile Picture"
               />
-              <p style={{ color: "black", justifyContent: 'center', textAlign: 'center', fontSize: 40, textDecoration: 'underline' }}> @{follower.username} </p>
+              <p style={{ marginTop: 30, marginBottom: 15, color: "black", justifyContent: 'center', textAlign: 'center', fontSize: 40, textDecoration: 'underline' }}>@{follower.username}</p>
               <p>
           </p>
               {follower.totalStorageLeft <= 0 ? (
-                <p>💾 Out of storage!</p>
+                <p style={{ margin: 0 }}>💾 Out of storage!</p>
               ) : (
-                <p>💾 Storage Left: {follower.totalStorageLeft}</p>
+                <p style={{ margin: 0 }}>
+                  <span style={{ color: 'white' }}>💾 Storage Left: </span>
+                  <span style={{ color: '#FD274A' }}>{follower.totalStorageLeft}</span>
+                </p>
               )}
             </div>
           ))}
@@ -354,7 +357,7 @@ app.frame('/show/:fid', async (c) => {
           <div
               style={{
                   alignItems: 'center',
-                  background: '#8863D0',
+                  background: '#11365D',
                   backgroundSize: '100% 100%',
                   display: 'flex',
                   flexDirection: 'column',
@@ -363,7 +366,7 @@ app.frame('/show/:fid', async (c) => {
                   justifyContent: 'center',
                   textAlign: 'center',
                   width: '100%',
-                  color: 'white',
+                  color: '#FD274A',
                   fontFamily: 'Space Mono',
                   fontSize: 35,
                   fontStyle: 'normal',
@@ -408,7 +411,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
         <div
             style={{
               alignItems: 'center',
-              background: '#8863D0',
+              background: '#11365D',
               backgroundSize: '100% 100%',
               display: 'flex',
               flexDirection: 'column',
@@ -431,28 +434,38 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
             <img
               src={userData.pfp_url.toLowerCase().endsWith('.webp') ? '/images/no_avatar.png' : userData.pfp_url}
               style={{
-                width: 200,
-                height: 200,
+                width: 180,
+                height: 180,
                 borderRadius: 100,
                 boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
               }}
             />
             <p style={{ marginTop: 30, marginBottom: 15 }}>💾 Capacity</p>
-            <p style={{ color: "white", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
-              Casts {casts_used} of {casts_capacity}
+            <p style={{ color: 'white', justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
+              <span>Casts </span>
+              <span style={{ color: '#FD274A' }}>{casts_used}</span>
+              <span > of </span>
+              <span style={{ color: 'orange' }}>{casts_capacity}</span>
             </p>
 
             <p style={{ color: "white", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
-              Reactions {reactions_used} of {reactions_capacity}
+              <span>Reactions </span>
+              <span style={{ color: '#FD274A' }}>{reactions_used}</span>
+              <span > of </span>
+              <span style={{ color: 'orange' }}>{reactions_capacity}</span>
             </p>
 
             <p style={{ color: "white", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
-              Follows {links_used} of {links_capacity}
+              <span>Follows </span>
+              <span style={{ color: '#FD274A' }}>{links_used}</span>
+              <span > of </span>
+              <span style={{ color: 'orange' }}>{links_capacity}</span>
             </p>
-            <p>
-              <span style={{ margin: 30, color: 'white' }}>🎁 Gift Storage to </span>
+
+            <p style={{ margin: 30, }}>
+              <span style={{ color: 'white' }}>🎁 Gift Storage to </span>
               <span style={{ color: 'black', textDecoration: 'underline' }}>@{userData.username}</span>
-              <span> ?</span>
+              <span style={{ color: 'white' }}> ?</span>
             </p>
           </div>
       ),
@@ -468,7 +481,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
             <div
                 style={{
                     alignItems: 'center',
-                    background: '#8863D0',
+                    background: '#11365D',
                     backgroundSize: '100% 100%',
                     display: 'flex',
                     flexDirection: 'column',
@@ -477,7 +490,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
                     justifyContent: 'center',
                     textAlign: 'center',
                     width: '100%',
-                    color: 'white',
+                    color: '#FD274A',
                     fontFamily: 'Space Mono',
                     fontSize: 35,
                     fontStyle: 'normal',
@@ -571,7 +584,7 @@ app.frame("/tx-status/:username", async (c) => {
         <div
           style={{
             alignItems: 'center',
-            background: '#8863D0',
+            background: '#11365D',
             backgroundSize: '100% 100%',
             display: 'flex',
             flexDirection: 'column',
@@ -594,7 +607,7 @@ app.frame("/tx-status/:username", async (c) => {
           <p>
               <span style={{ color: 'white' }}>Storage successfully gifted to</span>
               <span style={{ color: 'black', textDecoration: 'underline' }}>@{username}</span>
-              <span>!</span>
+              <span style={{ color: 'white' }}>!</span>
           </p>
         </div>
       ),
@@ -615,7 +628,7 @@ app.frame("/tx-status/:username", async (c) => {
         <div
           style={{
             alignItems: 'center',
-            background: '#8863D0',
+            background: '#11365D',
             backgroundSize: '100% 100%',
             display: 'flex',
             flexDirection: 'column',
@@ -624,7 +637,7 @@ app.frame("/tx-status/:username", async (c) => {
             justifyContent: 'center',
             textAlign: 'center',
             width: '100%',
-            color: 'white',
+            color: '#FD274A',
             fontFamily: 'Space Mono',
             fontSize: 35,
             fontStyle: 'normal',
