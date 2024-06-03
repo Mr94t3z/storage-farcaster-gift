@@ -3,12 +3,12 @@ import { handle } from 'frog/vercel'
 import { storageRegistry } from "../lib/contracts.js";
 import fetch from 'node-fetch';
 import { createGlideClient, Chains, CurrenciesByChain } from "@paywithglide/glide-js";
-import { encodeFunctionData, hexToBigInt } from 'viem';
+import { encodeFunctionData, hexToBigInt, toHex } from 'viem';
 import dotenv from 'dotenv';
 
 // Uncomment this packages to tested on local server
-// import { devtools } from 'frog/dev';
-// import { serveStatic } from 'frog/serve-static';
+import { devtools } from 'frog/dev';
+import { serveStatic } from 'frog/serve-static';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -538,11 +538,11 @@ async (c) => {
     transaction: {
       chainId: Chains.Optimism.caip2,
       to: storageRegistry.address,
-      value: price,
+      value: toHex(price),
       input: encodeFunctionData({
         abi: storageRegistry.abi,
         functionName: "rent",
-        args: [BigInt(toFid), 1n],
+        args: [BigInt(toFid), units],
       }),
     },
   });
@@ -659,7 +659,7 @@ app.frame("/tx-status", async (c) => {
 
 
 // Uncomment for local server testing
-// devtools(app, { serveStatic });
+devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)
