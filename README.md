@@ -56,7 +56,7 @@ Storage Farcaster Gift is built using the minimal & lightweight framework for Fa
 The [Storage Registry](https://optimistic.etherscan.io/address/0x00000000fcCe7f938e7aE6D3c335bD6a1a7c593D#code) smart contract address is `0x00000000fcCe7f938e7aE6D3c335bD6a1a7c593D`.
 
 ## Demo
-Watch the demo on YouTube: [Storage Farcaster Gift Demo](https://www.youtube.com/watch?v=VBQbbLt75l8)
+Watch the demo on YouTube: [Storage Farcaster Gift Demo](https://youtu.be/qrBpwwsNNHM)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
