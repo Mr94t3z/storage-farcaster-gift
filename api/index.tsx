@@ -174,7 +174,9 @@ app.frame('/dashboard', async (c) => {
 
 
 app.frame('/show/:fid', async (c) => {
-  const { fid } = c.req.param();
+  // const { fid } = c.req.param();
+
+  const fid = 397668;
 
   const { buttonValue } = c;
 
