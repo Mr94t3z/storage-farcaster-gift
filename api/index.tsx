@@ -403,10 +403,8 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
     const data = await response.json();
     const userData = data.users[0];
 
-    const username = userData.username;
-
     return c.res({
-      action: `/tx-status/${username}`,
+      action: `/tx-status`,
       image: (
         <div
             style={{
@@ -559,8 +557,7 @@ async (c) => {
 })
 
 
-app.frame("/tx-status/:username", async (c) => {
-  const { username } = c.req.param();
+app.frame("/tx-status", async (c) => {
   const { transactionId, buttonValue } = c;
  
   // The payment transaction hash is passed with transactionId if the user just completed the payment. If the user hit the "Refresh" button, the transaction hash is passed with buttonValue.
@@ -604,11 +601,7 @@ app.frame("/tx-status/:username", async (c) => {
             whiteSpace: 'pre-wrap',
           }}
         >
-          <p>
-              <span style={{ color: 'white' }}>Storage successfully gifted to</span>
-              <span style={{ color: 'black', textDecoration: 'underline' }}>@{username}</span>
-              <span style={{ color: 'white' }}>!</span>
-          </p>
+          Storage gifted successfully!
         </div>
       ),
       intents: [
