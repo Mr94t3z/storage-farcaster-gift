@@ -7,8 +7,8 @@ import { encodeFunctionData, hexToBigInt, toHex } from 'viem';
 import dotenv from 'dotenv';
 
 // Uncomment this packages to tested on local server
-import { devtools } from 'frog/dev';
-import { serveStatic } from 'frog/serve-static';
+// import { devtools } from 'frog/dev';
+// import { serveStatic } from 'frog/serve-static';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -659,7 +659,7 @@ app.frame("/tx-status", async (c) => {
 
 
 // Uncomment for local server testing
-devtools(app, { serveStatic });
+// devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)
