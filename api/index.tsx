@@ -102,7 +102,7 @@ app.frame('/dashboard', async (c) => {
             width: '100%',
             color: 'white',
             fontFamily: 'Space Mono',
-            fontSize: 35,
+            fontSize: 32,
             fontStyle: 'normal',
             letterSpacing: '-0.025em',
             lineHeight: 1.4,
@@ -114,25 +114,26 @@ app.frame('/dashboard', async (c) => {
           <img
             src={userData.pfp_url.toLowerCase().endsWith('.webp') ? '/images/no_avatar.png' : userData.pfp_url}
             style={{
-              width: 200,
-              height: 200,
-              borderRadius: 100,
+              width: 180,
+              height: 180,
+              borderRadius: '50%',
               boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
+              border: '5px solid #FD274A',
             }}
             width={200} 
             height={200} 
           />
           <p>
             <span style={{ color: 'white' }}>Hi, </span>
-            <span style={{ color: 'black', textDecoration: 'underline' }}>@{userData.username}</span>
+            <span style={{ color: 'orange', textDecoration: 'underline' }}>@{userData.username}</span>
             <span> 🙌🏻</span>
           </p>
-          <p style={{ color: 'orange', margin: '0', justifyContent: 'center', textAlign: 'center', fontSize: 30 }}>Click the search button to find out who among the people you follow is low on storage.</p>
+          <p style={{ color: '#A7D2D2', margin: '0', justifyContent: 'center', textAlign: 'center', fontSize: 32 }}>Do you want to find them?</p>
         </div>
       ),
       intents: [
-        <Button action={`/show/${fid}`}>Search ✅</Button>,
-        <Button.Reset>Cancel ⏏︎</Button.Reset>
+        <Button action={`/show/${fid}`}>Yes, please!</Button>,
+        <Button.Reset>No!</Button.Reset>
       ],
     });
   } catch (error) {
@@ -153,7 +154,7 @@ app.frame('/dashboard', async (c) => {
                   width: '100%',
                   color: '#FD274A',
                   fontFamily: 'Space Mono',
-                  fontSize: 35,
+                  fontSize: 32,
                   fontStyle: 'normal',
                   letterSpacing: '-0.025em',
                   lineHeight: 1.4,
@@ -174,9 +175,7 @@ app.frame('/dashboard', async (c) => {
 
 
 app.frame('/show/:fid', async (c) => {
-  // const { fid } = c.req.param();
-
-  const fid = 397668;
+  const { fid } = c.req.param();
 
   const { buttonValue } = c;
 
@@ -246,12 +245,6 @@ app.frame('/show/:fid', async (c) => {
                         username: username,
                         pfp_url: pfp_url,
                         totalStorageLeft: totalStorageLeft,
-                        casts_capacity: storageData.casts.capacity,
-                        casts_used: storageData.casts.used,
-                        reactions_capacity: storageData.reactions.capacity,
-                        reactions_used: storageData.reactions.used,
-                        links_capacity: storageData.links.capacity,
-                        links_used: storageData.links.used,
                     };
                 }
             } else {
@@ -285,12 +278,8 @@ app.frame('/show/:fid', async (c) => {
 
     // Get the follower chosen to gift storage
     const toFid = displayData.length > 0 ? displayData[0].fid : null;
-    const casts_capacity = displayData.length > 0 ? displayData[0].casts_capacity : 0;
-    const casts_used = displayData.length > 0 ? displayData[0].casts_used : 0;
-    const reactions_capacity = displayData.length > 0 ? displayData[0].reactions_capacity : 0;
-    const reactions_used = displayData.length > 0 ? displayData[0].reactions_used : 0;
-    const links_capacity = displayData.length > 0 ? displayData[0].links_capacity : 0;
-    const links_used = displayData.length > 0 ? displayData[0].links_used : 0;
+
+    const totalStorageLeft = displayData.length > 0 ? displayData[0].totalStorageLeft : null;
 
     return c.res({
       image: (
@@ -307,7 +296,7 @@ app.frame('/show/:fid', async (c) => {
             width: '100%',
             color: 'white',
             fontFamily: 'Space Mono',
-            fontSize: 35,
+            fontSize: 32,
             fontStyle: 'normal',
             letterSpacing: '-0.025em',
             lineHeight: 1.4,
@@ -320,20 +309,21 @@ app.frame('/show/:fid', async (c) => {
               <img
                   src={follower.pfp_url.toLowerCase().endsWith('.webp') ? '/images/no_avatar.png' : follower.pfp_url}
                   style={{
-                      width: 200,
-                      height: 200,
-                      borderRadius: 100,
+                      width: 180,
+                      height: 180,
+                      borderRadius: '50%',
                       boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
+                      border: '5px solid #FD274A',
                   }}
                   width={200}
                   height={200}
                   alt="Profile Picture"
               />
-              <p style={{ marginTop: 30, marginBottom: 15, color: "black", justifyContent: 'center', textAlign: 'center', fontSize: 40, textDecoration: 'underline' }}>@{follower.username}</p>
+              <p style={{ marginTop: 30, marginBottom: 15, color: "orange", justifyContent: 'center', textAlign: 'center', fontSize: 42, textDecoration: 'underline' }}>@{follower.username}</p>
               <p>
-          </p>
+              </p>
               {follower.totalStorageLeft <= 0 ? (
-                <p style={{ margin: 0 }}>💾 Out of storage!</p>
+                <p style={{ margin: 0, color: '#FD274A' }}>💾 Out of storage!</p>
               ) : (
                 <p style={{ margin: 0 }}>
                   <span style={{ color: 'white' }}>💾 Storage Left: </span>
@@ -345,7 +335,7 @@ app.frame('/show/:fid', async (c) => {
         </div>
       ),
       intents: [
-         <Button action={`/gift/${toFid}/${casts_capacity}/${casts_used}/${reactions_capacity}/${reactions_used}/${links_capacity}/${links_used}`}>View ◉</Button>,
+          <Button action={`/gift/${toFid}/${totalStorageLeft}`}>View ◉</Button>,
           <Button.Reset>Cancel ⏏︎</Button.Reset>,
          currentPage > 1 && <Button value="back">← Back</Button>,
         currentPage < totalPages && <Button value="next">Next →</Button>,
@@ -369,7 +359,7 @@ app.frame('/show/:fid', async (c) => {
                   width: '100%',
                   color: '#FD274A',
                   fontFamily: 'Space Mono',
-                  fontSize: 35,
+                  fontSize: 32,
                   fontStyle: 'normal',
                   letterSpacing: '-0.025em',
                   lineHeight: 1.4,
@@ -389,8 +379,8 @@ app.frame('/show/:fid', async (c) => {
 });
 
 
-app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactions_used/:links_capacity/:links_used', async (c) => {
-  const { toFid, casts_capacity, casts_used, reactions_capacity, reactions_used, links_capacity, links_used } = c.req.param();
+app.frame('/gift/:toFid/:totalStorageLeft', async (c) => {
+  const { toFid, totalStorageLeft } = c.req.param();
 
   try {
     const response = await fetch(`${baseUrlNeynarV2}/user/bulk?fids=${toFid}&viewer_fid=${toFid}`, {
@@ -421,7 +411,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
               width: '100%',
               color: 'black',
               fontFamily: 'Space Mono',
-              fontSize: 35,
+              fontSize: 32,
               fontStyle: 'normal',
               letterSpacing: '-0.025em',
               lineHeight: 1.4,
@@ -435,42 +425,31 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
               style={{
                 width: 180,
                 height: 180,
-                borderRadius: 100,
+                borderRadius: '50%',
                 boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
+                border: '5px solid #FD274A',
               }}
             />
-            <p style={{ marginTop: 30, marginBottom: 15 }}>💾 Capacity</p>
-            <p style={{ color: 'white', justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
-              <span>Casts </span>
-              <span style={{ color: '#FD274A' }}>{casts_used}</span>
-              <span > of </span>
-              <span style={{ color: 'orange' }}>{casts_capacity}</span>
-            </p>
 
-            <p style={{ color: "white", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
-              <span>Reactions </span>
-              <span style={{ color: '#FD274A' }}>{reactions_used}</span>
-              <span > of </span>
-              <span style={{ color: 'orange' }}>{reactions_capacity}</span>
-            </p>
-
-            <p style={{ color: "white", justifyContent: 'center', textAlign: 'center', fontSize: 24, margin: 0 }}>
-              <span>Follows </span>
-              <span style={{ color: '#FD274A' }}>{links_used}</span>
-              <span > of </span>
-              <span style={{ color: 'orange' }}>{links_capacity}</span>
-            </p>
-
-            <p style={{ margin: 30, }}>
-              <span style={{ color: 'white' }}>🎁 Gift Storage to </span>
-              <span style={{ color: 'black', textDecoration: 'underline' }}>@{userData.username}</span>
+            <p style={{ marginTop: 50, fontSize: 42 }}>
+              <span style={{ color: 'white' }}>Gift storage to </span>
+              <span style={{ color: 'orange', textDecoration: 'underline' }}>@{userData.username}</span>
               <span style={{ color: 'white' }}> ?</span>
             </p>
+
+            {Number(totalStorageLeft) <= 0 ? (
+              <p style={{ marginTop: 30, color: '#FD274A'}}>💾 Out of storage!</p>
+            ) : (
+              <p style={{marginTop: 30 }}>
+                <span style={{ color: 'white' }}>💾 Storage Left: </span>
+                <span style={{ color: '#FD274A' }}>{totalStorageLeft}</span>
+              </p>
+            )}
           </div>
       ),
       intents: [
-        <Button.Transaction target={`/tx-gift/${toFid}`}>Gift Storage 💰</Button.Transaction>,
-         <Button.Reset>Cancel ⏏︎</Button.Reset>,
+        <Button.Transaction target={`/tx-gift/${toFid}`}>Yes</Button.Transaction>,
+         <Button.Reset>No</Button.Reset>,
       ]
     })
     } catch (error) {
@@ -491,7 +470,7 @@ app.frame('/gift/:toFid/:casts_capacity/:casts_used/:reactions_capacity/:reactio
                     width: '100%',
                     color: '#FD274A',
                     fontFamily: 'Space Mono',
-                    fontSize: 35,
+                    fontSize: 32,
                     fontStyle: 'normal',
                     letterSpacing: '-0.025em',
                     lineHeight: 1.4,
@@ -597,7 +576,7 @@ app.frame("/tx-status", async (c) => {
             width: '100%',
             color: 'white',
             fontFamily: 'Space Mono',
-            fontSize: 35,
+            fontSize: 32,
             fontStyle: 'normal',
             letterSpacing: '-0.025em',
             lineHeight: 1.4,
@@ -637,7 +616,7 @@ app.frame("/tx-status", async (c) => {
             width: '100%',
             color: '#FD274A',
             fontFamily: 'Space Mono',
-            fontSize: 35,
+            fontSize: 32,
             fontStyle: 'normal',
             letterSpacing: '-0.025em',
             lineHeight: 1.4,
