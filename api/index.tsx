@@ -133,7 +133,7 @@ app.frame('/dashboard', async (c) => {
       ),
       intents: [
         <Button action={`/show/${fid}`}>Yes, please!</Button>,
-        <Button.Reset>No!</Button.Reset>
+        <Button.Reset>No</Button.Reset>
       ],
     });
   } catch (error) {
