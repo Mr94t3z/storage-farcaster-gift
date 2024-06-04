@@ -52,8 +52,8 @@ Explore the Neynar API reference [here](https://docs.neynar.com/reference/neynar
 ## Frog Framework
 Storage Farcaster Gift is built using the minimal & lightweight framework for Farcaster Frames called [Frog](https://frog.fm/).
 
-## Storage Farcaster Smart Contract
-The smart contract are deployed at the following address:
+## Farcaster: Storage Registry Contract
+The contract are deployed at the following address:
 
 | Contract       | Address                                      |
 |----------------|----------------------------------------------|
