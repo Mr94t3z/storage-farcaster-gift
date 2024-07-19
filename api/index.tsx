@@ -195,6 +195,7 @@ app.frame('/show/:fid', async (c) => {
         'api_key': process.env.NEYNAR_API_KEY || '',
       },
     });
+
     const followingData = await followingResponse.json();
 
     // Batch processing
@@ -535,7 +536,7 @@ async (c) => {
   return c.send({
     chainId: Chains.Base.caip2,
     to: unsignedTransaction.to,
-    data: unsignedTransaction.input,
+    data: unsignedTransaction.input || undefined,
     value: hexToBigInt(unsignedTransaction.value),
   });
 })
