@@ -1,17 +1,22 @@
-import { Button, Frog } from 'frog'
+import { Button, Frog, TextInput } from 'frog'
 import { handle } from 'frog/vercel'
+import { neynar } from 'frog/middlewares'
+import { Box, Image, Heading, Text, VStack, Spacer, vars } from "../lib/ui.js";
 import { storageRegistry } from "../lib/contracts.js";
-import fetch from 'node-fetch';
 import { createGlideClient, Chains, CurrenciesByChain } from "@paywithglide/glide-js";
 import { encodeFunctionData, hexToBigInt, toHex } from 'viem';
+import { Lum0x } from "lum0x-sdk";
 import dotenv from 'dotenv';
 
 // Uncomment this packages to tested on local server
-// import { devtools } from 'frog/dev';
-// import { serveStatic } from 'frog/serve-static';
+import { devtools } from 'frog/dev';
+import { serveStatic } from 'frog/serve-static';
 
 // Load environment variables from .env file
 dotenv.config();
+
+// Initialize Lum0x SDK with API key
+Lum0x.init(process.env.LUM0X_API_KEY || '');
 
 // Define an in-memory cache object
 const cache: Record<string, any> = {};
@@ -24,6 +29,30 @@ async function getFromCache(key: string) {
 // Function to cache data
 async function cacheData(key: string, data: any) {
     cache[key] = data;
+}
+
+// Cache to store user data
+const cacheUser = new Map();
+
+// Function to fetch user data by fid
+async function fetchUserData(fid: string) {
+  if (cacheUser.has(fid)) {
+    return cacheUser.get(fid);
+  }
+
+  // Fetch user data using Lum0x.farcasterUser.getUserByFids
+  const res = await Lum0x.farcasterUser.getUserByFids({
+    fids: fid,  // Pass the FID directly
+  });
+
+  // Ensure the response contains the necessary user data
+  if (!res || !res.users || res.users.length === 0) {
+    throw new Error('User not found!');
+  }
+
+  const user = res.users[0];
+  cacheUser.set(fid, user);
+  return user;
 }
 
 export const glideClient = createGlideClient({
@@ -39,17 +68,19 @@ const CAST_INTENS =
 export const app = new Frog({
   assetsPath: '/',
   basePath: '/api/frame',
+  ui: { vars },
   browserLocation: CAST_INTENS,
-  imageOptions: {
-    /* Other default options */
-    fonts: [
-      {
-        name: 'Space Mono',
-        source: 'google',
-      },
-    ],    
+  title: "FC Storage Gift - Base",
+  headers: {
+    'cache-control': 'no-store, no-cache, must-revalidate, proxy-revalidate max-age=0, s-maxage=0',
   },
-})
+}).use(
+  neynar({
+    apiKey: process.env.NEYNAR_API_KEY || 'NEYNAR_FROG_FM',
+    features: ['interactor', 'cast'],
+  }),
+)
+
 
 // Initialize total pages and current page
 const itemsPerPage = 1;
@@ -60,118 +91,97 @@ let currentPage = 1;
 const baseUrlNeynarV2 = process.env.BASE_URL_NEYNAR_V2;
 
 app.frame('/', (c) => {
-  currentPage = 1;
   return c.res({
-    image: '/storage-farcaster-gift-with-glide.jpeg',
+    image: '/fc_storage_gift_on_base.png',
     intents: [
-      <Button action="/dashboard">Start 🎯</Button>,
+      <Button action="/dashboard">Start</Button>,
     ]
   })
 })
 
 app.frame('/dashboard', async (c) => {
-  const { frameData } = c;
-  const { fid } = frameData as unknown as { buttonIndex?: number; fid?: string };
+  const { fid } = c.var.interactor || {}
 
   try {
-    const response = await fetch(`${baseUrlNeynarV2}/user/bulk?fids=${fid}`, {
-      method: 'GET',
-      headers: {
-        'accept': 'application/json',
-        'api_key': process.env.NEYNAR_API_KEY || '',
-      },
-    });
+    // const lum0xFrameValidation = await postLum0xTestFrameValidation();
 
-    const data = await response.json();
-    const userData = data.users[0];
-  
-
+    // console.log("lum0xFrameValidation: ", lum0xFrameValidation);
     return c.res({
-      image: (
-        <div
-          style={{
-            alignItems: 'center',
-            background: '#11365D',
-            backgroundSize: '100% 100%',
-            display: 'flex',
-            flexDirection: 'column',
-            flexWrap: 'nowrap',
-            height: '100%',
-            justifyContent: 'center',
-            textAlign: 'center',
-            width: '100%',
-            color: 'white',
-            fontFamily: 'Space Mono',
-            fontSize: 32,
-            fontStyle: 'normal',
-            letterSpacing: '-0.025em',
-            lineHeight: 1.4,
-            marginTop: 0,
-            padding: '0 120px',
-            whiteSpace: 'pre-wrap',
-          }}
-        >
-          <img
-            src={userData.pfp_url.toLowerCase().endsWith('.webp') ? '/images/no_avatar.png' : userData.pfp_url}
-            style={{
-              width: 180,
-              height: 180,
-              borderRadius: '50%',
-              boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
-              border: '5px solid #FD274A',
-            }}
-            width={200} 
-            height={200} 
-          />
-          <p>
-            <span style={{ color: 'white' }}>Hi, </span>
-            <span style={{ color: 'orange', textDecoration: 'underline' }}>@{userData.username}</span>
-            <span> 🙌🏻</span>
-          </p>
-          <p style={{ color: '#A7D2D2', margin: '0', justifyContent: 'center', textAlign: 'center', fontSize: 32 }}>Do you want to find them?</p>
-        </div>
-      ),
+      image: `/dashboard-image/${fid}`,
       intents: [
-        <Button action={`/show/${fid}`}>Yes, please!</Button>,
-        <Button.Reset>No</Button.Reset>
+        <TextInput placeholder="Search by username" />,
+        <Button action={`/show/${fid}`}>Let's go!</Button>,
+        <Button action='/search-by-username'>Search 🔎</Button>,
+        <Button.Reset>Cancel</Button.Reset>
       ],
     });
   } catch (error) {
-    console.error('Error fetching user data:', error);
-    return c.res({
-      image: (
-          <div
-              style={{
-                  alignItems: 'center',
-                  background: '#11365D',
-                  backgroundSize: '100% 100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  flexWrap: 'nowrap',
-                  height: '100%',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  width: '100%',
-                  color: '#FD274A',
-                  fontFamily: 'Space Mono',
-                  fontSize: 32,
-                  fontStyle: 'normal',
-                  letterSpacing: '-0.025em',
-                  lineHeight: 1.4,
-                  marginTop: 0,
-                  padding: '0 120px',
-                  whiteSpace: 'pre-wrap',
-              }}
-          >
-            Uh oh, you clicked the button too fast! Please try again.
-          </div>
-      ),
-      intents: [
-          <Button.Reset>Try Again ⏏︎</Button.Reset>,
-      ],
-  });
+    console.error('Unhandled error:', error);
+    return c.error({
+      message: `${error}`,
+    });
   }
 });
+
+app.image('/dashboard-image/:fid', async (c) => {
+  const { fid } = c.req.param();
+
+  const user = await fetchUserData(fid);
+
+  return c.res({
+    image: (
+      <Box
+        grow
+        alignVertical="center"
+        backgroundColor="white"
+        padding="48"
+        textAlign="center"
+        height="100%"
+      >
+        <VStack gap="4">
+            <Image
+                height="24"
+                objectFit="cover"
+                src="/images/base.png"
+              />
+            <Spacer size="24" />
+            <Box flexDirection="row" alignHorizontal="center" alignVertical="center">
+
+              <img
+                  height="128"
+                  width="128"
+                  src={user.pfp_url}
+                  style={{
+                    borderRadius: "38%",
+                    border: "3.5px solid #6212EC",
+                  }}
+                />
+              
+              <Spacer size="12" />
+                <Box flexDirection="column" alignHorizontal="left">
+                  <Text color="black" align="left" size="16">
+                    Hi, {user.display_name} 👋
+                  </Text>
+                  <Text color="grey" align="left" size="14">
+                    @{user.username}
+                  </Text>
+                </Box>
+            </Box>
+            <Spacer size="22" />
+            <Text align="center" color="purple" size="20">
+              Do you want to find them?
+            </Text>
+            <Spacer size="22" />
+            <Box flexDirection="row" justifyContent="center">
+                <Text color="grey" align="center" size="16">created by</Text>
+                <Spacer size="4" />
+                <Text color="purple" decoration="underline" align="center" size="16"> @0x94t3z</Text>
+            </Box>
+        </VStack>
+    </Box>
+    ),
+  })
+})
 
 
 app.frame('/show/:fid', async (c) => {
@@ -641,7 +651,7 @@ app.frame("/tx-status", async (c) => {
 
 
 // Uncomment for local server testing
-// devtools(app, { serveStatic });
+devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)

@@ -11,9 +11,10 @@
     "@neynar/nodejs-sdk": "^1.15.0",
     "@paywithglide/glide-js": "^0.6.2",
     "dotenv": "^16.4.5",
-    "frog": "latest",
+    "frog": "^0.17.0",
     "hono": "^4",
-    "viem": "^2.9.31"
+    "lum0x-sdk": "^1.0.35",
+    "viem": "^2.13.10"
   },
   "devDependencies": {
     "@types/node-fetch": "^2.6.11",
