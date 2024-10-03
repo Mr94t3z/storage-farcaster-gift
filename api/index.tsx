@@ -62,7 +62,6 @@ export const glideClient = createGlideClient({
   chains: [Chains.Base, Chains.Optimism],
 });
 
-
 const baseUrl = "https://warpcast.com/~/compose";
 const text = "FC Storage Gift 💾\n\nFrame by @0x94t3z.eth";
 const embedUrl = "https://base.0x94t3z.tech/api/frame";
@@ -74,7 +73,7 @@ export const app = new Frog({
   basePath: '/api/frame',
   ui: { vars },
   browserLocation: CAST_INTENS,
-  title: "FC Storage Gift - Base",
+  title: "FC Storage Gift - [ Base Chain ]",
   headers: {
     'cache-control': 'no-store, no-cache, must-revalidate, proxy-revalidate max-age=0, s-maxage=0',
   },
@@ -85,14 +84,10 @@ export const app = new Frog({
   }),
 )
 
-
 // Initialize total pages and current page
 const itemsPerPage = 1;
 let totalPages = 0;
 let currentPage = 1;
-
-// Neynar API base URL
-const baseUrlNeynarV2 = process.env.BASE_URL_NEYNAR_V2;
 
 app.frame('/', (c) => {
   return c.res({
@@ -289,7 +284,7 @@ app.frame('/show/:fid', async (c) => {
           <Box
             grow
             alignVertical="center"
-            backgroundColor="black"
+            backgroundColor="white"
             padding="48"
             textAlign="center"
             height="100%"
@@ -315,7 +310,7 @@ app.frame('/show/:fid', async (c) => {
 
                   <Spacer size="12" />
                     <Box flexDirection="column" alignHorizontal="left">
-                      <Text color="white" align="left" size="16">
+                      <Text color="black" align="left" size="16">
                         {displayName}
                       </Text>
                       <Text color="grey" align="left" size="14">
@@ -332,12 +327,12 @@ app.frame('/show/:fid', async (c) => {
                   <Box flexDirection="row" justifyContent="center">
                   <Text color="purple" align="center" size="20">💾 {totalStorageLeft}</Text>
                   <Spacer size="6" />
-                  <Text color="white" align="center" size="20">storage left!</Text>
+                  <Text color="black" align="center" size="20">storage left!</Text>
                 </Box>
                 )}
                 <Spacer size="32" />
                 <Box flexDirection="row" justifyContent="center">
-                    <Text color="white" align="center" size="16">created by</Text>
+                    <Text color="grey" align="center" size="16">created by</Text>
                     <Spacer size="6" />
                     <Text color="purple" decoration="underline" align="center" size="16"> @0x94t3z</Text>
                 </Box>
@@ -359,118 +354,202 @@ app.frame('/show/:fid', async (c) => {
   }
 });
 
-
-app.frame('/gift/:toFid/:totalStorageLeft', async (c) => {
-  const { toFid, totalStorageLeft } = c.req.param();
+app.frame('/search-by-username', async (c) => {
+  const { inputText } = c;
 
   try {
-    const response = await fetch(`${baseUrlNeynarV2}/user/bulk?fids=${toFid}&viewer_fid=${toFid}`, {
-      method: 'GET',
-      headers: {
-        'accept': 'application/json',
-        'api_key': process.env.NEYNAR_API_KEY || '',
-      },
+    // Fetch by username using Lum0x SDK
+    const usernameResponse = await Lum0x.farcasterUser.searchUser({
+      q: `${inputText}`,
+      limit: 1
     });
 
-    const data = await response.json();
-    const userData = data.users[0];
+    const isUserFound = usernameResponse?.result?.users?.[0];
+
+    if (!isUserFound) {
+      return c.error({
+        message: `@${inputText} not found!`,
+      });
+    }
+
+    const toFid = isUserFound.fid;
+    const pfpUrl = isUserFound.pfp_url;
+    const displayName = isUserFound.display_name;
+    const username = isUserFound.username;
+
+    const storageResponse = await Lum0x.farcasterStorage.getStorageUsage({
+      fid: toFid
+    });
+
+    let totalStorageLeft = 0
+
+    if (storageResponse && storageResponse.casts && storageResponse.reactions && storageResponse.links) {
+
+      const totalStorageCapacity = (storageResponse.casts.capacity + storageResponse.reactions.capacity + storageResponse.links.capacity);
+    
+      const totalStorageUsed = (storageResponse.casts.used + storageResponse.reactions.used + storageResponse.links.used);
+    
+      totalStorageLeft = totalStorageCapacity - totalStorageUsed;
+    }
+
+    console.log("totalStorageLeft: ", totalStorageLeft);
 
     return c.res({
-      action: `/tx-status`,
-      image: (
-        <div
-            style={{
-              alignItems: 'center',
-              background: '#11365D',
-              backgroundSize: '100% 100%',
-              display: 'flex',
-              flexDirection: 'column',
-              flexWrap: 'nowrap',
-              height: '100%',
-              justifyContent: 'center',
-              textAlign: 'center',
-              width: '100%',
-              color: 'black',
-              fontFamily: 'Space Mono',
-              fontSize: 32,
-              fontStyle: 'normal',
-              letterSpacing: '-0.025em',
-              lineHeight: 1.4,
-              marginTop: 0,
-              padding: '0 120px',
-              whiteSpace: 'pre-wrap',
-            }}
+        image: (
+          <Box
+            grow
+            alignVertical="center"
+            backgroundColor="white"
+            padding="48"
+            textAlign="center"
+            height="100%"
           >
-            <img
-              src={userData.pfp_url.toLowerCase().endsWith('.webp') ? '/images/no_avatar.png' : userData.pfp_url}
-              style={{
-                width: 180,
-                height: 180,
-                borderRadius: '50%',
-                boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
-                border: '5px solid #FD274A',
-              }}
-            />
+            <VStack gap="4">
+                <Image
+                    height="24"
+                    objectFit="cover"
+                    src="/images/base.png"
+                  />
+                <Spacer size="32" />
+                <Box flexDirection="row" alignHorizontal="center" alignVertical="center">
+                  
+                  <img
+                      height="96"
+                      width="96"
+                      src={pfpUrl}
+                      style={{
+                        borderRadius: "38%",
+                        border: "3.5px solid #6212EC",
+                      }}
+                    />
 
-            <p style={{ marginTop: 50, fontSize: 42 }}>
-              <span style={{ color: 'white' }}>Gift storage to </span>
-              <span style={{ color: 'orange', textDecoration: 'underline' }}>@{userData.username}</span>
-              <span style={{ color: 'white' }}> ?</span>
-            </p>
-
-            {Number(totalStorageLeft) <= 0 ? (
-              <p style={{ marginTop: 30, color: '#FD274A'}}>💾 Out of storage!</p>
-            ) : (
-              <p style={{marginTop: 30 }}>
-                <span style={{ color: 'white' }}>💾 Storage Left: </span>
-                <span style={{ color: '#FD274A' }}>{totalStorageLeft}</span>
-              </p>
-            )}
-          </div>
+                  <Spacer size="12" />
+                    <Box flexDirection="column" alignHorizontal="left">
+                      <Text color="black" align="left" size="16">
+                        {displayName}
+                      </Text>
+                      <Text color="grey" align="left" size="14">
+                        @{username}
+                      </Text>
+                    </Box>
+                  </Box>
+                <Spacer size="22" />
+                {Number(totalStorageLeft) <= 0 ? (
+                  <Text align="center" color="red" size="20">
+                    💾 Out of storage!
+                  </Text>
+                ) : (
+                  <Box flexDirection="row" justifyContent="center">
+                  <Text color="purple" align="center" size="20">💾 {totalStorageLeft}</Text>
+                  <Spacer size="6" />
+                  <Text color="black" align="center" size="20">storage left!</Text>
+                </Box>
+                )}
+                <Spacer size="32" />
+                <Box flexDirection="row" justifyContent="center">
+                    <Text color="grey" align="center" size="16">created by</Text>
+                    <Spacer size="6" />
+                    <Text color="purple" decoration="underline" align="center" size="16"> @0x94t3z</Text>
+                </Box>
+            </VStack>
+        </Box>
       ),
       intents: [
-        <Button.Transaction target={`/tx-gift/${toFid}`}>Yes</Button.Transaction>,
-         <Button.Reset>No</Button.Reset>,
+        <Button action={`/gift/${toFid}`}>Gift</Button>,
+        <Button.Reset>Cancel</Button.Reset>,
+      ],
+    });
+  } catch (error) {
+    console.error('Unhandled error:', error);
+    return c.error({
+      message: `${error}`,
+    });
+  }
+});
+
+app.frame('/gift/:toFid', async (c) => {
+  const { toFid } = c.req.param();
+
+  try {
+    return c.res({
+      image: `/gift-image/${toFid}`,
+      intents: [
+        <Button.Transaction target={`/tx-gift/${toFid}`} action={`/refresh-tx-status/${toFid}`}>Confirm</Button.Transaction>,
+        <Button action='/'>Cancel</Button>,
       ]
     })
     } catch (error) {
-      console.error('Error fetching user data:', error);
-      return c.res({
-        image: (
-            <div
-                style={{
-                    alignItems: 'center',
-                    background: '#11365D',
-                    backgroundSize: '100% 100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    flexWrap: 'nowrap',
-                    height: '100%',
-                    justifyContent: 'center',
-                    textAlign: 'center',
-                    width: '100%',
-                    color: '#FD274A',
-                    fontFamily: 'Space Mono',
-                    fontSize: 32,
-                    fontStyle: 'normal',
-                    letterSpacing: '-0.025em',
-                    lineHeight: 1.4,
-                    marginTop: 0,
-                    padding: '0 120px',
-                    whiteSpace: 'pre-wrap',
-                }}
-            >
-              Uh oh, you clicked the button too fast! Please try again.
-            </div>
-        ),
-        intents: [
-            <Button.Reset>Try Again ⏏︎</Button.Reset>,
-        ],
-    });
+      console.error('Unhandled error:', error);
+      return c.error({
+        message: `${error}`,
+      });
     }
 })
 
- 
+app.image('/gift-image/:toFid', async (c) => {
+  const { toFid } = c.req.param();
+
+  const user = await fetchUserData(toFid);
+
+  return c.res({
+    image: (
+      <Box
+        grow
+        alignVertical="center"
+        backgroundColor="white"
+        padding="48"
+        textAlign="center"
+        height="100%"
+      >
+        <VStack gap="4">
+            <Image
+                height="24"
+                objectFit="cover"
+                src="/images/base.png"
+              />
+            <Spacer size="32" />
+            <Box flexDirection="row" alignHorizontal="center" alignVertical="center">
+
+              <img
+                  height="128"
+                  width="128"
+                  src={user.pfp_url}
+                  style={{
+                    borderRadius: "38%",
+                    border: "3.5px solid #6212EC",
+                  }}
+                />
+              
+              <Spacer size="12" />
+                <Box flexDirection="column" alignHorizontal="left">
+                  <Text color="black" align="left" size="16">
+                    {user.display_name}
+                  </Text>
+                  <Text color="grey" align="left" size="14">
+                    @{user.username}
+                  </Text>
+                </Box>
+              </Box>
+            <Spacer size="22" />
+            <Box flexDirection="row" justifyContent="center">
+              <Text color="black" align="center" size="20">Do you want to gift</Text>
+              <Spacer size="6" />
+              <Text color="purple" align="center" size="20">@{user.username}</Text>
+              <Spacer size="6" />
+              <Text color="black" align="center" size="20">?</Text>
+            </Box>
+            <Spacer size="32" />
+            <Box flexDirection="row" justifyContent="center">
+                <Text color="grey" align="center" size="16">created by</Text>
+                <Spacer size="6" />
+                <Text color="purple" decoration="underline" align="center" size="16"> @0x94t3z</Text>
+            </Box>
+        </VStack>
+    </Box>
+    ),
+  })
+})
+
 app.transaction('/tx-gift/:toFid', async (c, next) => {
   await next();
   const txParams = await c.res.json();
@@ -521,104 +600,167 @@ async (c) => {
   });
 })
 
-
-app.frame("/tx-status", async (c) => {
-  const { transactionId, buttonValue } = c;
+app.frame("/refresh-tx-status/:toFid", async (c) => {
+  const { transactionId } = c;
+  const { toFid } = c.req.param();
  
+  return c.res({
+    image: '/waiting.gif',
+    intents: [
+      <Button action={`/tx-status/${transactionId}/${toFid}`}>
+        Refresh
+      </Button>,
+    ],
+  });
+});
+
+app.frame("/tx-status/:transactionId/:toFid", async (c) => {
+  const { buttonValue } = c;
+  const { transactionId, toFid } = c.req.param();
+
   // The payment transaction hash is passed with transactionId if the user just completed the payment. If the user hit the "Refresh" button, the transaction hash is passed with buttonValue.
   const txHash = transactionId || buttonValue;
- 
+
+  console.log("buttonValue: ", buttonValue);
+  
   if (!txHash) {
-    throw new Error("missing transaction hash");
+    return c.error({
+      message: "Missing transaction hash, please try again.",
+    });
   }
- 
+
+  const user = await fetchUserData(toFid);
+
+  let session;
+
+  console.log("session: ", session);
   try {
-    let session = await glideClient.getSessionByPaymentTransaction({
-      chainId: Chains.Base.caip2,
+    console.log("txHash: ", txHash);
+    
+    session = await glideClient.getSessionByPaymentTransaction({
+      chainId: Chains.Polygon.caip2,
       txHash,
     });
- 
-    // Wait for the session to complete. It can take a few seconds
+
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    // Wait for the session to complete
     session = await glideClient.waitForSession(session.sessionId);
- 
+  } catch (error) {
+    // Return with a refresh button if the session is not found or another error occurs
     return c.res({
-      image: (
-        <div
-          style={{
-            alignItems: 'center',
-            background: '#11365D',
-            backgroundSize: '100% 100%',
-            display: 'flex',
-            flexDirection: 'column',
-            flexWrap: 'nowrap',
-            height: '100%',
-            justifyContent: 'center',
-            textAlign: 'center',
-            width: '100%',
-            color: 'white',
-            fontFamily: 'Space Mono',
-            fontSize: 32,
-            fontStyle: 'normal',
-            letterSpacing: '-0.025em',
-            lineHeight: 1.4,
-            marginTop: 0,
-            padding: '0 120px',
-            whiteSpace: 'pre-wrap',
-          }}
-        >
-          Storage gifted successfully!
-        </div>
-      ),
+      image: '/waiting.gif',
       intents: [
-        <Button.Link
-          href={`https://optimistic.etherscan.io/tx/${session.sponsoredTransactionHash}`}
-        >
-          View on Exploler
-        </Button.Link>,
-        <Button action="/">Home ⏏︎</Button>,
-      ],
-    });
-  } catch (e) {
-    // If the session is not found, it means the payment is still pending.
-    // Let the user know that the payment is pending and show a button to refresh the status.
-    return c.res({
-      image: (
-        <div
-          style={{
-            alignItems: 'center',
-            background: '#11365D',
-            backgroundSize: '100% 100%',
-            display: 'flex',
-            flexDirection: 'column',
-            flexWrap: 'nowrap',
-            height: '100%',
-            justifyContent: 'center',
-            textAlign: 'center',
-            width: '100%',
-            color: '#FD274A',
-            fontFamily: 'Space Mono',
-            fontSize: 32,
-            fontStyle: 'normal',
-            letterSpacing: '-0.025em',
-            lineHeight: 1.4,
-            marginTop: 0,
-            padding: '0 120px',
-            whiteSpace: 'pre-wrap',
-          }}
-        >
-          Waiting for payment confirmation..
-        </div>
-      ),
- 
-      intents: [
-        <Button value={txHash} action="/tx-status">
+        <Button value={txHash} action={`/tx-status/${transactionId}/${toFid}`}>
           Refresh
         </Button>,
       ],
     });
   }
+
+  // Check if payment is successful
+  if (session.paymentStatus !== 'paid') {
+    return c.res({
+      image: '/waiting.gif',
+      intents: [
+        <Button value={txHash} action={`/tx-status/${transactionId}/${toFid}`}>
+          Refresh
+        </Button>,
+      ],
+    });
+  }
+
+  const completeTxHash = session.sponsoredTransactionHash;
+  const shareText = `I just gifted 1 unit of storage to @${user.username} on @base !\n\nFrame by @0x94t3z.eth`;
+  const embedUrlByUser = `${embedUrl}/share-by-user/${toFid}/${completeTxHash}`;
+  const SHARE_BY_USER = `${baseUrl}?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(embedUrlByUser)}`;
+
+  return c.res({
+    image: `/image-share-by-user/${toFid}`,
+    intents: [
+      <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
+      <Button.Link href={SHARE_BY_USER}>Share</Button.Link>,
+    ],
+  });
 });
 
+app.frame("/share-by-user/:toFid/:completeTxHash", async (c) => {
+  const { toFid, completeTxHash } = c.req.param();
+
+  return c.res({
+    image: `/image-share-by-user/${toFid}`,
+    intents: [
+      <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
+      <Button action='/'>Give it a try!</Button>,
+    ],
+  });
+});
+
+app.image("/image-share-by-user/:toFid", async (c) => {
+  const { toFid } = c.req.param();
+
+  const user = await fetchUserData(toFid);
+ 
+  return c.res({
+    image: (
+      <Box
+        grow
+        alignVertical="center"
+        backgroundColor="white"
+        padding="48"
+        textAlign="center"
+        height="100%"
+      >
+        <VStack gap="4">
+            <Image
+                height="24"
+                objectFit="cover"
+                src="/images/base.png"
+              />
+            <Spacer size="32" />
+            <Box flexDirection="row" alignHorizontal="center" alignVertical="center">
+
+              <img
+                  height="128"
+                  width="128"
+                  src={user.pfp_url}
+                  style={{
+                    borderRadius: "38%",
+                    border: "3.5px solid #6212EC",
+                  }}
+                />
+              
+              <Spacer size="12" />
+                <Box flexDirection="column" alignHorizontal="left">
+                  <Text color="black" align="left" size="16">
+                    {user.display_name}
+                  </Text>
+                  <Text color="grey" align="left" size="14">
+                    @{user.username}
+                  </Text>
+                </Box>
+              </Box>
+            <Spacer size="22" />
+            <Box flexDirection="row" justifyContent="center">
+              <Text color="black" align="center" size="20">Successfully gifted to</Text>
+              <Spacer size="6" />
+              <Text color="purple" align="center" size="20">@{user.username}</Text>
+              <Spacer size="6" />
+              <Text color="black" align="center" size="20">!</Text>
+            </Box>
+            <Spacer size="32" />
+            <Box flexDirection="row" justifyContent="center">
+                <Text color="grey" align="center" size="16">created by</Text>
+                <Spacer size="6" />
+                <Text color="purple" decoration="underline" align="center" size="16"> @0x94t3z</Text>
+            </Box>
+        </VStack>
+    </Box>
+    ),
+  });
+});
 
 // Uncomment for local server testing
 devtools(app, { serveStatic });
