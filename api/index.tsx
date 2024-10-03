@@ -638,7 +638,7 @@ app.frame("/tx-status/:transactionId/:toFid", async (c) => {
     console.log("txHash: ", txHash);
     
     session = await glideClient.getSessionByPaymentTransaction({
-      chainId: Chains.Polygon.caip2,
+      chainId: Chains.Base.caip2,
       txHash,
     });
 
