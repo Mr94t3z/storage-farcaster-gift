@@ -10,7 +10,7 @@
     "jsx": "react-jsx",
     "jsxImportSource": "frog/jsx",
 
-    /* Linting */
+    /* Linting Comment */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
