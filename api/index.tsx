@@ -1,7 +1,7 @@
 import { Button, Frog, TextInput } from 'frog'
 import { handle } from 'frog/vercel'
 import { neynar } from 'frog/middlewares'
-import { Box, Image, Heading, Text, VStack, Spacer, vars } from "../lib/ui.js";
+import { Box, Image, Text, VStack, Spacer, vars } from "../lib/ui.js";
 import { storageRegistry } from "../lib/contracts.js";
 import { createGlideClient, Chains, CurrenciesByChain } from "@paywithglide/glide-js";
 import { encodeFunctionData, hexToBigInt, toHex } from 'viem';
@@ -62,8 +62,12 @@ export const glideClient = createGlideClient({
   chains: [Chains.Base, Chains.Optimism],
 });
 
-const CAST_INTENS = 
-  "https://warpcast.com/~/compose?text=Storage%20Farcaster%20Gift%20by%20@0x94t3z.eth&embeds[]=https://storage-farcaster-gift.vercel.app/api/frame"
+
+const baseUrl = "https://warpcast.com/~/compose";
+const text = "FC Storage Gift 💾\n\nFrame by @0x94t3z.eth";
+const embedUrl = "https://base.0x94t3z.tech/api/frame";
+
+const CAST_INTENS = `${baseUrl}?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`;
 
 export const app = new Frog({
   assetsPath: '/',
@@ -103,9 +107,6 @@ app.frame('/dashboard', async (c) => {
   const { fid } = c.var.interactor || {}
 
   try {
-    // const lum0xFrameValidation = await postLum0xTestFrameValidation();
-
-    // console.log("lum0xFrameValidation: ", lum0xFrameValidation);
     return c.res({
       image: `/dashboard-image/${fid}`,
       intents: [
@@ -183,7 +184,6 @@ app.image('/dashboard-image/:fid', async (c) => {
   })
 })
 
-
 app.frame('/show/:fid', async (c) => {
   const { fid } = c.req.param();
 
@@ -197,60 +197,50 @@ app.frame('/show/:fid', async (c) => {
   }
 
   try {
-    // Fetch relevant following data (because we are using public trial, so we set limit to 100 to avoid rate limit error)
-    const followingResponse = await fetch(`${baseUrlNeynarV2}/following?fid=${fid}&limit=100`, {
-      method: 'GET',
-      headers: {
-        'accept': 'application/json',
-        'api_key': process.env.NEYNAR_API_KEY || '',
-      },
+    // Fetch following users using Lum0x SDK
+    let followingResponse = await Lum0x.farcasterFollowers.getUsersFollowedByFid({
+      fid: Number(fid),
+      limit: 100
     });
-
-    const followingData = await followingResponse.json();
-
+    
+    // Ensure followingResponse.users exists and is an array
+    if (!followingResponse || !Array.isArray(followingResponse.users)) {
+        throw new Error('Invalid following response structure');
+    }
+    
     // Batch processing
     const chunkSize = 15;
     const chunkedUsers = [];
-    for (let i = 0; i < followingData.users.length; i += chunkSize) {
-        chunkedUsers.push(followingData.users.slice(i, i + chunkSize));
+    for (let i = 0; i < followingResponse.users.length; i += chunkSize) {
+        chunkedUsers.push(followingResponse.users.slice(i, i + chunkSize));
     }
-
-    // Array to store promises for storage requests
+    
     const storagePromises = [];
-
+    
     // Iterate over each chunk and make separate requests for storage data
     for (const chunk of chunkedUsers) {
-        const chunkPromises = chunk.map(async (userData: { user: { fid: undefined; username: any; pfp_url: any; }; }) => {
-            if (userData && userData.user && userData.user.fid !== undefined && userData.user.username && userData.user.pfp_url) {
+        const chunkPromises = chunk.map(async (userData: { user: { fid: any; username: any; pfp_url: any; }; }) => {
+            if (userData && userData.user && typeof userData.user.fid !== 'undefined' && userData.user.username && userData.user.pfp_url) {
                 const followingFid = userData.user.fid;
                 const username = userData.user.username;
                 const pfp_url = userData.user.pfp_url;
-
+    
                 // Check if storage data is already cached
-                let storageData = await getFromCache(followingFid);
-                if (!storageData) {
-                    const storageResponse = await fetch(`${baseUrlNeynarV2}/storage/usage?fid=${followingFid}`, {
-                        method: 'GET',
-                        headers: {
-                            'accept': 'application/json',
-                            'api_key': process.env.NEYNAR_API_KEY || '',
-                        },
+                let storageResponse = await getFromCache(followingFid);
+                if (!storageResponse) {
+                    storageResponse = await Lum0x.farcasterStorage.getStorageUsage({
+                        fid: followingFid
                     });
-                    storageData = await storageResponse.json();
-
+    
                     // Cache the storage data
-                    await cacheData(followingFid, storageData);
+                    await cacheData(followingFid, storageResponse);
                 }
-
-                if (storageData && storageData.casts && storageData.reactions && storageData.links) {
-
-                    // const totalStorageCapacity = (storageData.casts.capacity + storageData.reactions.capacity + storageData.links.capacity) * storageData.total_active_units;
-                    const totalStorageCapacity = storageData.casts.capacity + storageData.reactions.capacity + storageData.links.capacity;
-
-                    const totalStorageUsed = storageData.casts.used + storageData.reactions.used + storageData.links.used;
-
+    
+                if (storageResponse && storageResponse.casts && storageResponse.reactions && storageResponse.links) {
+                    const totalStorageCapacity = (storageResponse.casts.capacity + storageResponse.reactions.capacity + storageResponse.links.capacity);
+                    const totalStorageUsed = (storageResponse.casts.used + storageResponse.reactions.used + storageResponse.links.used);
                     const totalStorageLeft = totalStorageCapacity - totalStorageUsed;
-
+    
                     return {
                         fid: followingFid,
                         username: username,
@@ -259,133 +249,113 @@ app.frame('/show/:fid', async (c) => {
                     };
                 }
             } else {
-                console.log("User data is missing necessary properties.");
+                console.log("User data is missing necessary properties or user object is undefined.");
                 return null; // Return null for users with missing properties
             }
         });
-
+    
         // Add promises for storage requests in this chunk to the main array
         storagePromises.push(...chunkPromises);
     }
-
+    
     // Wait for all storage requests to complete
     const extractedData = await Promise.all(storagePromises);
-
+    
     // Filter out null values
     const validExtractedData = extractedData.filter(data => data !== null);
-
+    
     // Sort the extracted data in ascending order based on total storage left
     validExtractedData.sort((a, b) => a.totalStorageLeft - b.totalStorageLeft);
-
+    
     // Calculate index range to display data from API
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, validExtractedData.length);
     const displayData = validExtractedData.slice(startIndex, endIndex);
-
+    
     // Update totalPages based on the current extracted data
     totalPages = Math.ceil(validExtractedData.length / itemsPerPage);
     // Limit totalPages to 5
     totalPages = Math.min(totalPages, 5);
-
+    
     // Get the follower chosen to gift storage
     const toFid = displayData.length > 0 ? displayData[0].fid : null;
-
+    const pfpUrl = displayData.length > 0 ? displayData[0].pfp_url : null;
+    const displayName = displayData.length > 0 ? displayData[0].display_name : null;
+    const username = displayData.length > 0 ? displayData[0].username : null;
     const totalStorageLeft = displayData.length > 0 ? displayData[0].totalStorageLeft : null;
 
     return c.res({
-      image: (
-        <div style={{
-            alignItems: 'center',
-            background: '#11365D',
-            backgroundSize: '100% 100%',
-            display: 'flex',
-            flexDirection: 'column',
-            flexWrap: 'nowrap',
-            height: '100%',
-            justifyContent: 'center',
-            textAlign: 'center',
-            width: '100%',
-            color: 'white',
-            fontFamily: 'Space Mono',
-            fontSize: 32,
-            fontStyle: 'normal',
-            letterSpacing: '-0.025em',
-            lineHeight: 1.4,
-            marginTop: 0,
-            padding: '0 120px',
-            whiteSpace: 'pre-wrap',
-          }}>
-           {displayData.map((follower, index) => (
-            <div key={index} style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'white', display: 'flex', fontSize: 30, flexDirection: 'column', marginBottom: 20 }}>
-              <img
-                  src={follower.pfp_url.toLowerCase().endsWith('.webp') ? '/images/no_avatar.png' : follower.pfp_url}
-                  style={{
-                      width: 180,
-                      height: 180,
-                      borderRadius: '50%',
-                      boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.5)",
-                      border: '5px solid #FD274A',
-                  }}
-                  width={200}
-                  height={200}
-                  alt="Profile Picture"
-              />
-              <p style={{ marginTop: 30, marginBottom: 15, color: "orange", justifyContent: 'center', textAlign: 'center', fontSize: 42, textDecoration: 'underline' }}>@{follower.username}</p>
-              <p>
-              </p>
-              {follower.totalStorageLeft <= 0 ? (
-                <p style={{ margin: 0, color: '#FD274A' }}>💾 Out of storage!</p>
-              ) : (
-                <p style={{ margin: 0 }}>
-                  <span style={{ color: 'white' }}>💾 Storage Left: </span>
-                  <span style={{ color: '#FD274A' }}>{follower.totalStorageLeft}</span>
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
+        image: (
+          <Box
+            grow
+            alignVertical="center"
+            backgroundColor="black"
+            padding="48"
+            textAlign="center"
+            height="100%"
+          >
+            <VStack gap="4">
+                <Image
+                    height="24"
+                    objectFit="cover"
+                    src="/images/base.png"
+                  />
+                <Spacer size="32" />
+                <Box flexDirection="row" alignHorizontal="center" alignVertical="center">
+                  
+                  <img
+                      height="96"
+                      width="96"
+                      src={pfpUrl}
+                      style={{
+                        borderRadius: "38%",
+                        border: "3.5px solid #6212EC",
+                      }}
+                    />
+
+                  <Spacer size="12" />
+                    <Box flexDirection="column" alignHorizontal="left">
+                      <Text color="white" align="left" size="16">
+                        {displayName}
+                      </Text>
+                      <Text color="grey" align="left" size="14">
+                        @{username}
+                      </Text>
+                    </Box>
+                  </Box>
+                <Spacer size="22" />
+                {Number(totalStorageLeft) <= 0 ? (
+                  <Text align="center" color="red" size="20">
+                    💾 Out of storage!
+                  </Text>
+                ) : (
+                  <Box flexDirection="row" justifyContent="center">
+                  <Text color="purple" align="center" size="20">💾 {totalStorageLeft}</Text>
+                  <Spacer size="6" />
+                  <Text color="white" align="center" size="20">storage left!</Text>
+                </Box>
+                )}
+                <Spacer size="32" />
+                <Box flexDirection="row" justifyContent="center">
+                    <Text color="white" align="center" size="16">created by</Text>
+                    <Spacer size="6" />
+                    <Text color="purple" decoration="underline" align="center" size="16"> @0x94t3z</Text>
+                </Box>
+            </VStack>
+        </Box>
       ),
       intents: [
-          <Button action={`/gift/${toFid}/${totalStorageLeft}`}>View ◉</Button>,
-          <Button.Reset>Cancel ⏏︎</Button.Reset>,
-         currentPage > 1 && <Button value="back">← Back</Button>,
+        <Button action={`/gift/${toFid}`}>Gift</Button>,
+        <Button.Reset>Cancel</Button.Reset>,
+        currentPage > 1 && <Button value="back">← Back</Button>,
         currentPage < totalPages && <Button value="next">Next →</Button>,
       ],
     });
   } catch (error) {
-    console.error('Error fetching user data:', error);
-    return c.res({
-      image: (
-          <div
-              style={{
-                  alignItems: 'center',
-                  background: '#11365D',
-                  backgroundSize: '100% 100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  flexWrap: 'nowrap',
-                  height: '100%',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  width: '100%',
-                  color: '#FD274A',
-                  fontFamily: 'Space Mono',
-                  fontSize: 32,
-                  fontStyle: 'normal',
-                  letterSpacing: '-0.025em',
-                  lineHeight: 1.4,
-                  marginTop: 0,
-                  padding: '0 120px',
-                  whiteSpace: 'pre-wrap',
-              }}
-          >
-            Uh oh, you clicked the button too fast! Please try again.
-          </div>
-      ),
-      intents: [
-          <Button.Reset>Try Again ⏏︎</Button.Reset>,
-      ],
-  });
+    console.error('Unhandled error:', error);
+    return c.error({
+      message: `${error}`,
+    });
   }
 });
 
