@@ -73,7 +73,7 @@ export const app = new Frog({
   basePath: '/api/frame',
   ui: { vars },
   browserLocation: CAST_INTENS,
-  title: "FC Storage Gift - [ Base Chain ]",
+  title: "FC Storage Gift - Powered by Base Chain",
   headers: {
     'cache-control': 'no-store, no-cache, must-revalidate, proxy-revalidate max-age=0, s-maxage=0',
   },
