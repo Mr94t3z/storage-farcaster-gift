@@ -26,7 +26,7 @@ A Farcaster Frame is used to locate the people you follow on Farcaster who have 
    ```plaintext
     GLIDE_PROJECT_ID = "YOUR_GLIDE_PROJECT_ID"
     NEYNAR_API_KEY = "YOUR_NEYNAR_API_KEY"
-    BASE_URL_NEYNAR_V2 = "https://api.neynar.com/v2/farcaster"
+    LUM0X_API_KEY = "YOUR_LU0X_API_KEY"
    ```
 
 ## Usage
@@ -36,21 +36,37 @@ A Farcaster Frame is used to locate the people you follow on Farcaster who have 
    ```
 2. Access the application in your browser at `http://localhost:5173/api/frame/dev`.
 
+---
+
 ## Technologies Used
-- Node.js
-- Frog
-- Neynar
-- Glide
-- Vercel
+- **Node.js**: JavaScript runtime for building server-side applications.
+- **Frog**: A minimal and lightweight framework for Farcaster Frames.
+- **Lum0x**: A computation layer for Farcaster that empowers key contributors.
+- **Neynar**: API service for interacting with Farcaster.
+- **Glide**: Payment integration and API service.
+- **Vercel**: Platform for deploying and hosting web applications.
 
-## Sign Up for Glide API Key
-Sign up to get your API key for Glide [here](https://paywithglide.xyz/).
+## What is Lum0x?
+Lum0x provides a robust computation layer for the Farcaster ecosystem, enabling developers and creators to build engaging content like Farcaster Frames. It supports key contributors in generating and managing content effectively.
 
-## Neynar API Reference
-Explore the Neynar API reference [here](https://docs.neynar.com/reference/neynar-farcaster-api-overview).
+### Additional Resources
+- **Lum0x Website**: [lum0x.com](https://lum0x.com)
+- **Lum0x SDK**: [sdk.lum0x.com](https://sdk.lum0x.com)
+- **Lum0x Documentation**: [docs.lum0x.com](https://docs.lum0x.com)
 
-## Frog Framework
-Storage Farcaster Gift is built using the minimal & lightweight framework for Farcaster Frames called [Frog](https://frog.fm/).
+### Getting Started with Lum0x
+Sign up for an API key to start using Lum0x: [Get Lum0x API Key](https://buildathon.lum0x.com/)
+
+### Getting Started with Glide
+Sign up for an API key for Glide: [Get Glide API Key](https://paywithglide.xyz/)
+
+### Neynar API Reference
+Explore the Neynar API reference here: [Neynar API Documentation](https://docs.neynar.com/reference/neynar-farcaster-api-overview)
+
+### About Frog
+The Storage Farcaster Gift project utilizes Frog, a minimal and lightweight framework specifically designed for Farcaster Frames. Learn more about Frog: [Frog Framework](https://frog.fm/)
+
+---
 
 ## Farcaster: Storage Registry Contract
 The contract are deployed at the following address:
