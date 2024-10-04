@@ -9,8 +9,8 @@ import { Lum0x } from "lum0x-sdk";
 import dotenv from 'dotenv';
 
 // Uncomment this packages to tested on local server
-import { devtools } from 'frog/dev';
-import { serveStatic } from 'frog/serve-static';
+// import { devtools } from 'frog/dev';
+// import { serveStatic } from 'frog/serve-static';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -155,23 +155,23 @@ app.image('/dashboard-image/:fid', async (c) => {
               
               <Spacer size="12" />
                 <Box flexDirection="column" alignHorizontal="left">
-                  <Text color="black" align="left" size="16">
+                  <Text color="black" align="left" size="20">
                     Hi, {user.display_name} 👋
                   </Text>
-                  <Text color="grey" align="left" size="14">
+                  <Text color="grey" align="left" size="18">
                     @{user.username}
                   </Text>
                 </Box>
             </Box>
             <Spacer size="22" />
-            <Text align="center" color="purple" size="20">
+            <Text align="center" color="purple" size="24">
               Do you want to find them?
             </Text>
             <Spacer size="22" />
             <Box flexDirection="row" justifyContent="center">
-                <Text color="grey" align="center" size="16">created by</Text>
+                <Text color="grey" align="center" size="18">created by</Text>
                 <Spacer size="4" />
-                <Text color="purple" decoration="underline" align="center" size="16"> @0x94t3z</Text>
+                <Text color="purple" decoration="underline" align="center" size="18"> @0x94t3z</Text>
             </Box>
         </VStack>
     </Box>
@@ -310,31 +310,31 @@ app.frame('/show/:fid', async (c) => {
 
                   <Spacer size="12" />
                     <Box flexDirection="column" alignHorizontal="left">
-                      <Text color="black" align="left" size="16">
+                      <Text color="black" align="left" size="20">
                         {displayName}
                       </Text>
-                      <Text color="grey" align="left" size="14">
+                      <Text color="grey" align="left" size="18">
                         @{username}
                       </Text>
                     </Box>
                   </Box>
                 <Spacer size="22" />
                 {Number(totalStorageLeft) <= 0 ? (
-                  <Text align="center" color="red" size="20">
+                  <Text align="center" color="red" size="24">
                     💾 Out of storage!
                   </Text>
                 ) : (
                   <Box flexDirection="row" justifyContent="center">
-                  <Text color="purple" align="center" size="20">💾 {totalStorageLeft}</Text>
+                  <Text color="purple" align="center" size="24">💾 {totalStorageLeft}</Text>
                   <Spacer size="6" />
-                  <Text color="black" align="center" size="20">storage left!</Text>
+                  <Text color="black" align="center" size="24">storage left!</Text>
                 </Box>
                 )}
                 <Spacer size="32" />
                 <Box flexDirection="row" justifyContent="center">
-                    <Text color="grey" align="center" size="16">created by</Text>
+                    <Text color="grey" align="center" size="18">created by</Text>
                     <Spacer size="6" />
-                    <Text color="purple" decoration="underline" align="center" size="16"> @0x94t3z</Text>
+                    <Text color="purple" decoration="underline" align="center" size="18"> @0x94t3z</Text>
                 </Box>
             </VStack>
         </Box>
@@ -425,31 +425,31 @@ app.frame('/search-by-username', async (c) => {
 
                   <Spacer size="12" />
                     <Box flexDirection="column" alignHorizontal="left">
-                      <Text color="black" align="left" size="16">
+                      <Text color="black" align="left" size="20">
                         {displayName}
                       </Text>
-                      <Text color="grey" align="left" size="14">
+                      <Text color="grey" align="left" size="18">
                         @{username}
                       </Text>
                     </Box>
                   </Box>
                 <Spacer size="22" />
                 {Number(totalStorageLeft) <= 0 ? (
-                  <Text align="center" color="red" size="20">
+                  <Text align="center" color="red" size="24">
                     💾 Out of storage!
                   </Text>
                 ) : (
                   <Box flexDirection="row" justifyContent="center">
-                  <Text color="purple" align="center" size="20">💾 {totalStorageLeft}</Text>
+                  <Text color="purple" align="center" size="24">💾 {totalStorageLeft}</Text>
                   <Spacer size="6" />
-                  <Text color="black" align="center" size="20">storage left!</Text>
+                  <Text color="black" align="center" size="24">storage left!</Text>
                 </Box>
                 )}
                 <Spacer size="32" />
                 <Box flexDirection="row" justifyContent="center">
-                    <Text color="grey" align="center" size="16">created by</Text>
+                    <Text color="grey" align="center" size="18">created by</Text>
                     <Spacer size="6" />
-                    <Text color="purple" decoration="underline" align="center" size="16"> @0x94t3z</Text>
+                    <Text color="purple" decoration="underline" align="center" size="18"> @0x94t3z</Text>
                 </Box>
             </VStack>
         </Box>
@@ -522,27 +522,27 @@ app.image('/gift-image/:toFid', async (c) => {
               
               <Spacer size="12" />
                 <Box flexDirection="column" alignHorizontal="left">
-                  <Text color="black" align="left" size="16">
+                  <Text color="black" align="left" size="20">
                     {user.display_name}
                   </Text>
-                  <Text color="grey" align="left" size="14">
+                  <Text color="grey" align="left" size="18">
                     @{user.username}
                   </Text>
                 </Box>
               </Box>
             <Spacer size="22" />
             <Box flexDirection="row" justifyContent="center">
-              <Text color="black" align="center" size="20">Do you want to gift</Text>
+              <Text color="black" align="center" size="24">Do you want to gift</Text>
               <Spacer size="6" />
-              <Text color="purple" align="center" size="20">@{user.username}</Text>
+              <Text color="purple" align="center" size="24">@{user.username}</Text>
               <Spacer size="6" />
-              <Text color="black" align="center" size="20">?</Text>
+              <Text color="black" align="center" size="24">?</Text>
             </Box>
             <Spacer size="32" />
             <Box flexDirection="row" justifyContent="center">
-                <Text color="grey" align="center" size="16">created by</Text>
+                <Text color="grey" align="center" size="18">created by</Text>
                 <Spacer size="6" />
-                <Text color="purple" decoration="underline" align="center" size="16"> @0x94t3z</Text>
+                <Text color="purple" decoration="underline" align="center" size="18"> @0x94t3z</Text>
             </Box>
         </VStack>
     </Box>
@@ -734,27 +734,27 @@ app.image("/image-share-by-user/:toFid", async (c) => {
               
               <Spacer size="12" />
                 <Box flexDirection="column" alignHorizontal="left">
-                  <Text color="black" align="left" size="16">
+                  <Text color="black" align="left" size="20">
                     {user.display_name}
                   </Text>
-                  <Text color="grey" align="left" size="14">
+                  <Text color="grey" align="left" size="18">
                     @{user.username}
                   </Text>
                 </Box>
               </Box>
             <Spacer size="22" />
             <Box flexDirection="row" justifyContent="center">
-              <Text color="black" align="center" size="20">Successfully gifted to</Text>
+              <Text color="black" align="center" size="24">Successfully gifted to</Text>
               <Spacer size="6" />
-              <Text color="purple" align="center" size="20">@{user.username}</Text>
+              <Text color="purple" align="center" size="24">@{user.username}</Text>
               <Spacer size="6" />
-              <Text color="black" align="center" size="20">!</Text>
+              <Text color="black" align="center" size="24">!</Text>
             </Box>
             <Spacer size="32" />
             <Box flexDirection="row" justifyContent="center">
-                <Text color="grey" align="center" size="16">created by</Text>
+                <Text color="grey" align="center" size="18">created by</Text>
                 <Spacer size="6" />
-                <Text color="purple" decoration="underline" align="center" size="16"> @0x94t3z</Text>
+                <Text color="purple" decoration="underline" align="center" size="18"> @0x94t3z</Text>
             </Box>
         </VStack>
     </Box>
@@ -763,7 +763,7 @@ app.image("/image-share-by-user/:toFid", async (c) => {
 });
 
 // Uncomment for local server testing
-devtools(app, { serveStatic });
+// devtools(app, { serveStatic });
 
 export const GET = handle(app)
 export const POST = handle(app)
