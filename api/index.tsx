@@ -61,20 +61,15 @@ export const glideConfig = createGlideConfig({
   chains: [chains.base, chains.optimism],
 });
 
-type State = { 
-  glideSessionId?: string; 
-}; 
-
 const baseUrl = "https://warpcast.com/~/compose";
 const text = "FC Storage Gift 💾\n\nFrame by @0x94t3z.eth";
 const embedUrl = "https://base.0x94t3z.tech/api/frame";
 
 const CAST_INTENS = `${baseUrl}?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`;
 
-export const app = new Frog<{ State: State }>({
+export const app = new Frog({
   assetsPath: '/',
   basePath: '/api/frame',
-  initialState: {},
   ui: { vars },
   browserLocation: CAST_INTENS,
   title: "FC Storage Gift - Powered by Base Network",
@@ -483,29 +478,23 @@ app.frame('/gift/:toFid', async (c) => {
   const units = 1n;
   const price = await storageRegistry.read.price([units]);
  
-  await c.deriveState(async (state) => {
-    // Create a Glide session for rent Farcaster Storage
-    const { sessionId } = await createSession(glideConfig, {
-      // account: ethAddresses[0] as `0x${string}`,
-      paymentCurrency: currencies.eth.on(chains.base),
- 
-      chainId: chains.optimism.id,
-      abi: storageRegistry.abi,
-      address: storageRegistry.address,
-      functionName: "rent",
-      args: [BigInt(toFid), units],
-      value: BigInt(toHex(price)),
-    });
- 
-    // Store the Glide session ID in the state
-    state.glideSessionId = sessionId;
+  // Create a Glide session for rent Farcaster Storage
+  const { sessionId } = await createSession(glideConfig, {
+    paymentCurrency: currencies.eth.on(chains.base),
+
+    chainId: chains.optimism.id,
+    abi: storageRegistry.abi,
+    address: storageRegistry.address,
+    functionName: "rent",
+    args: [BigInt(toFid), units],
+    value: BigInt(toHex(price)),
   });
 
   try {
     return c.res({
       image: `/gift-image/${toFid}`,
       intents: [
-        <Button.Transaction target={`/tx-gift`} action={`/tx-status/${toFid}`}>Confirm</Button.Transaction>,
+        <Button.Transaction target={`/tx-gift/${sessionId}`} action={`/tx-status/${sessionId}/${toFid}`}>Confirm</Button.Transaction>,
         <Button action='/'>Cancel</Button>,
       ]
     })
@@ -581,7 +570,7 @@ app.image('/gift-image/:toFid', async (c) => {
   })
 })
 
-app.transaction('/tx-gift', async (c, next) => {
+app.transaction('/tx-gift/:sessionId', async (c, next) => {
   await next();
   const txParams = await c.res.json();
   txParams.attribution = false;
@@ -593,15 +582,11 @@ app.transaction('/tx-gift', async (c, next) => {
   });
 },
 async (c) => {
-  const glideSessionId = c.previousState.glideSessionId;
- 
-  if (!glideSessionId) {
-    throw new Error("No Glide session ID found.");
-  }
+  const { sessionId } = c.req.param();
  
   const { unsignedTransaction } = await getSessionById(
     glideConfig,
-    glideSessionId,
+    sessionId,
   );
 
   if (!unsignedTransaction) {
@@ -618,14 +603,9 @@ async (c) => {
   });
 })
 
-app.frame("/tx-status/:toFid", async (c) => {
-    const {
-      transactionId,
-      buttonValue,
-      previousState: { glideSessionId },
-    } = c;
-    const { toFid } = c.req.param();
-    const sessionId = glideSessionId as string;
+app.frame("/tx-status/:sessionId/:toFid", async (c) => {
+    const { transactionId, buttonValue } = c;
+    const { sessionId, toFid } = c.req.param();
 
     // The payment transaction hash is passed with transactionId if the user just completed the payment. If the user hit the "Refresh" button, the transaction hash is passed with buttonValue.
     const txHash = transactionId || buttonValue;
@@ -635,7 +615,7 @@ app.frame("/tx-status/:toFid", async (c) => {
         message: "Missing transaction hash, please try again.",
       });
     }
-    
+
     // Check if the session is already completed
     const { success } = await updatePaymentTransaction(glideConfig, {
       sessionId: sessionId,
@@ -656,7 +636,7 @@ app.frame("/tx-status/:toFid", async (c) => {
     console.log("Session: ", session);
 
     // If the session has a sponsoredTransactionHash, it means the transaction is complete
-    if (session.sponsoredTransactionStatus === "success") {
+    if (session.sponsoredTransactionHash) {
       const user = await fetchUserData(toFid);
 
       const completeTxHash = session.sponsoredTransactionHash;
