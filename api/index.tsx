@@ -474,7 +474,7 @@ app.frame('/gift/:toFid', async (c) => {
     return c.res({
       image: `/gift-image/${toFid}`,
       intents: [
-        <Button.Transaction target={`/tx-gift/${toFid}`} action={`/tx-status`}>Confirm</Button.Transaction>,
+        <Button.Transaction target={`/tx-gift/${toFid}`} action={`/refresh-tx-status/${toFid}`}>Confirm</Button.Transaction>,
         <Button action='/'>Cancel</Button>,
       ]
     })
@@ -600,264 +600,167 @@ async (c) => {
   });
 })
 
-// app.frame("/refresh-tx-status/:toFid", async (c) => {
-//   const { transactionId } = c;
-//   const { toFid } = c.req.param();
+app.frame("/refresh-tx-status/:toFid", async (c) => {
+  const { transactionId } = c;
+  const { toFid } = c.req.param();
  
-//   return c.res({
-//     image: '/waiting.gif',
-//     intents: [
-//       <Button action={`/tx-status/${transactionId}/${toFid}`}>
-//         Refresh
-//       </Button>,
-//     ],
-//   });
-// });
+  return c.res({
+    image: '/waiting.gif',
+    intents: [
+      <Button action={`/tx-status/${transactionId}/${toFid}`}>
+        Refresh
+      </Button>,
+    ],
+  });
+});
 
-app.frame("/tx-status", async (c) => {
-  const { transactionId, buttonValue } = c;
- 
+app.frame("/tx-status/:transactionId/:toFid", async (c) => {
+  const { buttonValue } = c;
+  const { transactionId, toFid } = c.req.param();
+
   // The payment transaction hash is passed with transactionId if the user just completed the payment. If the user hit the "Refresh" button, the transaction hash is passed with buttonValue.
   const txHash = transactionId || buttonValue;
- 
+
+  console.log("buttonValue: ", buttonValue);
+  
   if (!txHash) {
-    throw new Error("missing transaction hash");
+    return c.error({
+      message: "Missing transaction hash, please try again.",
+    });
   }
- 
+
+  const user = await fetchUserData(toFid);
+
+  let session;
+
+  console.log("session: ", session);
   try {
-    let session = await glideClient.getSessionByPaymentTransaction({
+    console.log("txHash: ", txHash);
+    
+    session = await glideClient.getSessionByPaymentTransaction({
       chainId: Chains.Base.caip2,
       txHash,
     });
- 
-    // Wait for the session to complete. It can take a few seconds
+
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    // Wait for the session to complete
     session = await glideClient.waitForSession(session.sessionId);
- 
+  } catch (error) {
+    // Return with a refresh button if the session is not found or another error occurs
     return c.res({
-      image: (
-        <div
-          style={{
-            alignItems: 'center',
-            background: '#11365D',
-            backgroundSize: '100% 100%',
-            display: 'flex',
-            flexDirection: 'column',
-            flexWrap: 'nowrap',
-            height: '100%',
-            justifyContent: 'center',
-            textAlign: 'center',
-            width: '100%',
-            color: 'white',
-            fontFamily: 'Space Mono',
-            fontSize: 32,
-            fontStyle: 'normal',
-            letterSpacing: '-0.025em',
-            lineHeight: 1.4,
-            marginTop: 0,
-            padding: '0 120px',
-            whiteSpace: 'pre-wrap',
-          }}
-        >
-          Storage gifted successfully!
-        </div>
-      ),
+      image: '/waiting.gif',
       intents: [
-        <Button.Link
-          href={`https://optimistic.etherscan.io/tx/${session.sponsoredTransactionHash}`}
-        >
-          View on Exploler
-        </Button.Link>,
-        <Button action="/">Home ⏏︎</Button>,
-      ],
-    });
-  } catch (e) {
-    // If the session is not found, it means the payment is still pending.
-    // Let the user know that the payment is pending and show a button to refresh the status.
-    return c.res({
-      image: (
-        <div
-          style={{
-            alignItems: 'center',
-            background: '#11365D',
-            backgroundSize: '100% 100%',
-            display: 'flex',
-            flexDirection: 'column',
-            flexWrap: 'nowrap',
-            height: '100%',
-            justifyContent: 'center',
-            textAlign: 'center',
-            width: '100%',
-            color: '#FD274A',
-            fontFamily: 'Space Mono',
-            fontSize: 32,
-            fontStyle: 'normal',
-            letterSpacing: '-0.025em',
-            lineHeight: 1.4,
-            marginTop: 0,
-            padding: '0 120px',
-            whiteSpace: 'pre-wrap',
-          }}
-        >
-          Waiting for payment confirmation..
-        </div>
-      ),
- 
-      intents: [
-        <Button value={txHash} action="/tx-status">
+        <Button value={txHash} action={`/tx-status/${transactionId}/${toFid}`}>
           Refresh
         </Button>,
       ],
     });
   }
+
+  // Check if payment is successful
+  if (session.paymentStatus !== 'paid') {
+    return c.res({
+      image: '/waiting.gif',
+      intents: [
+        <Button value={txHash} action={`/tx-status/${transactionId}/${toFid}`}>
+          Refresh
+        </Button>,
+      ],
+    });
+  }
+
+  const completeTxHash = session.sponsoredTransactionHash;
+  const shareText = `I just gifted 1 unit of storage to @${user.username} on @base !\n\nFrame by @0x94t3z.eth`;
+  const embedUrlByUser = `${embedUrl}/share-by-user/${toFid}/${completeTxHash}`;
+  const SHARE_BY_USER = `${baseUrl}?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(embedUrlByUser)}`;
+
+  return c.res({
+    image: `/image-share-by-user/${toFid}`,
+    intents: [
+      <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
+      <Button.Link href={SHARE_BY_USER}>Share</Button.Link>,
+    ],
+  });
 });
 
-// app.frame("/tx-status/:transactionId/:toFid", async (c) => {
-//   const { buttonValue } = c;
-//   const { transactionId, toFid } = c.req.param();
+app.frame("/share-by-user/:toFid/:completeTxHash", async (c) => {
+  const { toFid, completeTxHash } = c.req.param();
 
-//   // The payment transaction hash is passed with transactionId if the user just completed the payment. If the user hit the "Refresh" button, the transaction hash is passed with buttonValue.
-//   const txHash = transactionId || buttonValue;
+  return c.res({
+    image: `/image-share-by-user/${toFid}`,
+    intents: [
+      <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
+      <Button action='/'>Give it a try!</Button>,
+    ],
+  });
+});
 
-//   console.log("buttonValue: ", buttonValue);
-  
-//   if (!txHash) {
-//     return c.error({
-//       message: "Missing transaction hash, please try again.",
-//     });
-//   }
+app.image("/image-share-by-user/:toFid", async (c) => {
+  const { toFid } = c.req.param();
 
-//   const user = await fetchUserData(toFid);
-
-//   let session;
-
-//   console.log("session: ", session);
-//   try {
-//     console.log("txHash: ", txHash);
-    
-//     session = await glideClient.getSessionByPaymentTransaction({
-//       chainId: Chains.Base.caip2,
-//       txHash,
-//     });
-
-//     if (!session) {
-//       throw new Error('Session not found');
-//     }
-
-//     // Wait for the session to complete
-//     session = await glideClient.waitForSession(session.sessionId);
-//   } catch (error) {
-//     // Return with a refresh button if the session is not found or another error occurs
-//     return c.res({
-//       image: '/waiting.gif',
-//       intents: [
-//         <Button value={txHash} action={`/tx-status/${transactionId}/${toFid}`}>
-//           Refresh
-//         </Button>,
-//       ],
-//     });
-//   }
-
-//   // Check if payment is successful
-//   if (session.paymentStatus !== 'paid') {
-//     return c.res({
-//       image: '/waiting.gif',
-//       intents: [
-//         <Button value={txHash} action={`/tx-status/${transactionId}/${toFid}`}>
-//           Refresh
-//         </Button>,
-//       ],
-//     });
-//   }
-
-//   const completeTxHash = session.sponsoredTransactionHash;
-//   const shareText = `I just gifted 1 unit of storage to @${user.username} on @base !\n\nFrame by @0x94t3z.eth`;
-//   const embedUrlByUser = `${embedUrl}/share-by-user/${toFid}/${completeTxHash}`;
-//   const SHARE_BY_USER = `${baseUrl}?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(embedUrlByUser)}`;
-
-//   return c.res({
-//     image: `/image-share-by-user/${toFid}`,
-//     intents: [
-//       <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
-//       <Button.Link href={SHARE_BY_USER}>Share</Button.Link>,
-//     ],
-//   });
-// });
-
-// app.frame("/share-by-user/:toFid/:completeTxHash", async (c) => {
-//   const { toFid, completeTxHash } = c.req.param();
-
-//   return c.res({
-//     image: `/image-share-by-user/${toFid}`,
-//     intents: [
-//       <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
-//       <Button action='/'>Give it a try!</Button>,
-//     ],
-//   });
-// });
-
-// app.image("/image-share-by-user/:toFid", async (c) => {
-//   const { toFid } = c.req.param();
-
-//   const user = await fetchUserData(toFid);
+  const user = await fetchUserData(toFid);
  
-//   return c.res({
-//     image: (
-//       <Box
-//         grow
-//         alignVertical="center"
-//         backgroundColor="white"
-//         padding="48"
-//         textAlign="center"
-//         height="100%"
-//       >
-//         <VStack gap="4">
-//             <Image
-//                 height="24"
-//                 objectFit="cover"
-//                 src="/images/base.png"
-//               />
-//             <Spacer size="32" />
-//             <Box flexDirection="row" alignHorizontal="center" alignVertical="center">
+  return c.res({
+    image: (
+      <Box
+        grow
+        alignVertical="center"
+        backgroundColor="white"
+        padding="48"
+        textAlign="center"
+        height="100%"
+      >
+        <VStack gap="4">
+            <Image
+                height="24"
+                objectFit="cover"
+                src="/images/base.png"
+              />
+            <Spacer size="32" />
+            <Box flexDirection="row" alignHorizontal="center" alignVertical="center">
 
-//               <img
-//                   height="128"
-//                   width="128"
-//                   src={user.pfp_url}
-//                   style={{
-//                     borderRadius: "38%",
-//                     border: "3.5px solid #6212EC",
-//                   }}
-//                 />
+              <img
+                  height="128"
+                  width="128"
+                  src={user.pfp_url}
+                  style={{
+                    borderRadius: "38%",
+                    border: "3.5px solid #6212EC",
+                  }}
+                />
               
-//               <Spacer size="12" />
-//                 <Box flexDirection="column" alignHorizontal="left">
-//                   <Text color="black" align="left" size="20">
-//                     {user.display_name}
-//                   </Text>
-//                   <Text color="grey" align="left" size="18">
-//                     @{user.username}
-//                   </Text>
-//                 </Box>
-//               </Box>
-//             <Spacer size="22" />
-//             <Box flexDirection="row" justifyContent="center">
-//               <Text color="black" align="center" size="24">Successfully gifted to</Text>
-//               <Spacer size="6" />
-//               <Text color="purple" align="center" size="24">@{user.username}</Text>
-//               <Spacer size="6" />
-//               <Text color="black" align="center" size="24">!</Text>
-//             </Box>
-//             <Spacer size="32" />
-//             <Box flexDirection="row" justifyContent="center">
-//                 <Text color="grey" align="center" size="18">created by</Text>
-//                 <Spacer size="6" />
-//                 <Text color="purple" decoration="underline" align="center" size="18"> @0x94t3z</Text>
-//             </Box>
-//         </VStack>
-//     </Box>
-//     ),
-//   });
-// });
+              <Spacer size="12" />
+                <Box flexDirection="column" alignHorizontal="left">
+                  <Text color="black" align="left" size="20">
+                    {user.display_name}
+                  </Text>
+                  <Text color="grey" align="left" size="18">
+                    @{user.username}
+                  </Text>
+                </Box>
+              </Box>
+            <Spacer size="22" />
+            <Box flexDirection="row" justifyContent="center">
+              <Text color="black" align="center" size="24">Successfully gifted to</Text>
+              <Spacer size="6" />
+              <Text color="purple" align="center" size="24">@{user.username}</Text>
+              <Spacer size="6" />
+              <Text color="black" align="center" size="24">!</Text>
+            </Box>
+            <Spacer size="32" />
+            <Box flexDirection="row" justifyContent="center">
+                <Text color="grey" align="center" size="18">created by</Text>
+                <Spacer size="6" />
+                <Text color="purple" decoration="underline" align="center" size="18"> @0x94t3z</Text>
+            </Box>
+        </VStack>
+    </Box>
+    ),
+  });
+});
 
 // Uncomment for local server testing
 // devtools(app, { serveStatic });
