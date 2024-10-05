@@ -363,11 +363,12 @@ app.frame('/show/:fid', async (c) => {
 
 app.frame('/search-by-username', async (c) => {
   const { inputText } = c;
+  const usernameToSearch = inputText ?? '0x94t3z';
 
   try {
     // Fetch by username using Lum0x SDK
     const usernameResponse = await Lum0x.farcasterUser.searchUser({
-      q: `${inputText}`,
+      q: `${usernameToSearch}`,
       limit: 1
     });
 
@@ -615,54 +616,58 @@ app.frame("/tx-status/:sessionId/:toFid", async (c) => {
         message: "Missing transaction hash, please try again.",
       });
     }
-
-    // Check if the session is already completed
-    const { success } = await updatePaymentTransaction(glideConfig, {
-      sessionId: sessionId,
-      hash: txHash as `0x${string}`,
-    });
-
-    if (!success) {
-      throw new Error("failed to update payment transaction");
-    }
-
-    // Get the current session state
-    const session = await getSessionById(glideConfig, sessionId);
-
-    if (!session) {
-      throw new Error("Session not found");
-    }
-
-    console.log("Session: ", session);
-
-    // If the session has a sponsoredTransactionHash, it means the transaction is complete
-    if (session.sponsoredTransactionHash) {
-      const user = await fetchUserData(toFid);
-
-      const completeTxHash = session.sponsoredTransactionHash;
-      const shareText = `I just gifted 1 unit of storage to @${user.username} on @base !\n\nFrame by @0x94t3z.eth`;
-      const embedUrlByUser = `${embedUrl}/share-by-user/${toFid}/${completeTxHash}`;
-      const SHARE_BY_USER = `${baseUrl}?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(embedUrlByUser)}`;
-
-      return c.res({
-        image: `/image-share-by-user/${toFid}`,
-        intents: [
-          <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
-          <Button.Link href={SHARE_BY_USER}>Share</Button.Link>,
-        ],
+    try {
+      // Check if the session is already completed
+      const { success } = await updatePaymentTransaction(glideConfig, {
+        sessionId: sessionId,
+        hash: txHash as `0x${string}`,
       });
-    } else {
-      // If the session does not have a sponsoredTransactionHash, the payment is still pending
-      return c.res({
-        image: '/waiting.gif',
-        intents: [
-          <Button value={txHash} action={`/tx-status/:sessionId/${toFid}`}>
-            Refresh
-          </Button>,
-        ],
+
+      if (!success) {
+        console.log("failed to update payment transaction");
+      }
+
+      // Get the current session state
+      const session = await getSessionById(glideConfig, sessionId);
+
+      if (!session) {
+        console.log("Session not found");
+      }
+
+      // If the session has a sponsoredTransactionHash, it means the transaction is complete
+      if (session.sponsoredTransactionHash) {
+        const user = await fetchUserData(toFid);
+
+        const completeTxHash = session.sponsoredTransactionHash;
+        const shareText = `I just gifted 1 unit of storage to @${user.username} on @base !\n\nFrame by @0x94t3z.eth`;
+        const embedUrlByUser = `${embedUrl}/share-by-user/${toFid}/${completeTxHash}`;
+        const SHARE_BY_USER = `${baseUrl}?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(embedUrlByUser)}`;
+
+        return c.res({
+          image: `/image-share-by-user/${toFid}`,
+          intents: [
+            <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
+            <Button.Link href={SHARE_BY_USER}>Share</Button.Link>,
+          ],
+        });
+      } else {
+        // If the session does not have a sponsoredTransactionHash, the payment is still pending
+        return c.res({
+          image: '/waiting.gif',
+          intents: [
+            <Button value={txHash} action={`/tx-status/:sessionId/${toFid}`}>
+              Refresh
+            </Button>,
+          ],
+        });
+      }
+    } catch (error) {
+      console.error('Unhandled error:', error);
+      return c.error({
+        message: `Please wait for the transaction to complete and try again.`,
       });
     }
-  }
+  },
 );
 
 app.frame("/share-by-user/:toFid/:completeTxHash", async (c) => {
