@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@neynar/nodejs-sdk": "^1.28.0",
-    "@paywithglide/glide-js": "^0.9.10",
+    "@paywithglide/glide-js": "^0.9.19",
     "dotenv": "^16.4.5",
     "frog": "^0.17.0",
     "hono": "^4",
