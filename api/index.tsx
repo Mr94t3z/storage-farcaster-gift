@@ -656,7 +656,7 @@ app.frame("/tx-status/:sessionId/:toFid", async (c) => {
       return c.res({
         image: '/waiting.gif',
         intents: [
-          <Button value={txHash} action={`/tx-status/${toFid}`}>
+          <Button value={txHash} action={`/tx-status/:sessionId/${toFid}`}>
             Refresh
           </Button>,
         ],
