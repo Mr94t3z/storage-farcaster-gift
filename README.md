@@ -45,6 +45,7 @@ A Farcaster Frame is used to locate the people you follow on Farcaster who have 
 - **Lum0x**: A computation layer for Farcaster that empowers key contributors.
 - **Neynar**: API service for interacting with Farcaster.
 - **Glide**: Payment integration and API service.
+- **Airstack**: Provides an easy-to-use Validation API to validate your Frames signature packet in your Farcaster Frames.
 - **Vercel**: Platform for deploying and hosting web applications.
 
 ## What is Lum0x?

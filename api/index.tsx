@@ -4,7 +4,7 @@ import { neynar } from 'frog/middlewares'
 import { Box, Image, Text, VStack, Spacer, vars } from "../lib/ui.js";
 import { storageRegistry } from "../lib/contracts.js";
 import { createGlideConfig, chains, createSession, currencies, getSessionById, updatePaymentTransaction } from "@paywithglide/glide-js";
-import { hexToBigInt } from 'viem';
+import { hexToBigInt, toHex } from 'viem';
 import { Lum0x } from "lum0x-sdk";
 import dotenv from 'dotenv';
 
@@ -494,7 +494,7 @@ app.frame('/gift/:toFid', async (c) => {
       address: storageRegistry.address,
       functionName: "rent",
       args: [BigInt(toFid), units],
-      value: price,
+      value: BigInt(toHex(price)),
     });
  
     // Store the Glide session ID in the state
@@ -619,66 +619,90 @@ async (c) => {
 })
 
 app.frame("/tx-status/:toFid", async (c) => {
-  const {
-    transactionId,
-    buttonValue,
-    previousState: { glideSessionId },
-  } = c;
-  const { toFid } = c.req.param();
+    const {
+      transactionId,
+      buttonValue,
+      previousState: { glideSessionId },
+    } = c;
+    const { toFid } = c.req.param();
+    const sessionId = glideSessionId as string;
 
-  // The payment transaction hash is passed with transactionId if the user just completed the payment. If the user hit the "Refresh" button, the transaction hash is passed with buttonValue.
-  const txHash = transactionId || buttonValue;
-  
-  if (!txHash || !glideSessionId) {
-    return c.error({
-      message: "Missing payment transaction hash or Glide session ID",
-    });
-  }
+    // The payment transaction hash is passed with transactionId if the user just completed the payment. If the user hit the "Refresh" button, the transaction hash is passed with buttonValue.
+    const txHash = transactionId || buttonValue;
 
-  // Update the Glide session with the payment transaction hash, if the user just completed the payment.
-  if (transactionId) {
-    await updatePaymentTransaction(glideConfig, {
-      sessionId: glideSessionId,
-      hash: transactionId,
-    });
-  }
+    if (!txHash) {
+      return c.error({
+        message: "Missing transaction hash, please try again.",
+      });
+    }
 
-  const { sponsoredTransactionHash } = await getSessionById(glideConfig, glideSessionId);
+    try {
+      // Check if the session is already completed
+      const { success } = await updatePaymentTransaction(glideConfig, {
+        sessionId: sessionId,
+        hash: txHash as `0x${string}`,
+      });
 
-  const user = await fetchUserData(toFid);
+      if (!success) {
+        throw new Error("failed to update payment transaction");
+      }
 
-  // Check if payment is successful
-  if (!sponsoredTransactionHash) {
-    return c.res({
-      image: '/waiting.gif',
-      intents: [
-        <Button value={txHash} action={`/tx-status/${toFid}`}>
-          Refresh
-        </Button>,
-      ],
-    });
-  }
+      // Get the current session state
+      const session = await getSessionById(glideConfig, sessionId);
 
-  const shareText = `I just gifted 1 unit of storage to @${user.username} on @base !\n\nFrame by @0x94t3z.eth`;
-  const embedUrlByUser = `${embedUrl}/share-by-user/${toFid}/${sponsoredTransactionHash}`;
-  const SHARE_BY_USER = `${baseUrl}?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(embedUrlByUser)}`;
+      if (!session) {
+        throw new Error("Session not found");
+      }
+
+      // If the session has a sponsoredTransactionHash, it means the transaction is complete
+      if (session.sponsoredTransactionHash) {
+        const user = await fetchUserData(toFid);
+
+        const completeTxHash = session.sponsoredTransactionHash;
+        const shareText = `I just gifted 1 unit of storage to @${user.username} on @base !\n\nFrame by @0x94t3z.eth`;
+        const embedUrlByUser = `${embedUrl}/share-by-user/${toFid}/${completeTxHash}`;
+        const SHARE_BY_USER = `${baseUrl}?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(embedUrlByUser)}`;
+
+        return c.res({
+          image: `/image-share-by-user/${toFid}`,
+          intents: [
+            <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
+            <Button.Link href={SHARE_BY_USER}>Share</Button.Link>,
+          ],
+        });
+      } else {
+        // If the session does not have a sponsoredTransactionHash, the payment is still pending
+        return c.res({
+          image: '/waiting.gif',
+          intents: [
+            <Button value={txHash} action={`/tx-status/${toFid}`}>
+              Refresh
+            </Button>,
+          ],
+        });
+      }
+    } catch (e) {
+      console.error("Error:", e);
+
+      return c.res({
+        image: '/waiting.gif',
+        intents: [
+          <Button value={txHash} action={`/tx-status/${toFid}`}>
+            Refresh
+          </Button>,
+        ],
+      });
+    }
+  },
+);
+
+app.frame("/share-by-user/:toFid/:completeTxHash", async (c) => {
+  const { toFid, completeTxHash } = c.req.param();
 
   return c.res({
     image: `/image-share-by-user/${toFid}`,
     intents: [
-      <Button.Link href={`https://optimistic.etherscan.io/tx/${sponsoredTransactionHash}`}>View on Explorer</Button.Link>,
-      <Button.Link href={SHARE_BY_USER}>Share</Button.Link>,
-    ],
-  });
-});
-
-app.frame("/share-by-user/:toFid/:sponsoredTransactionHash", async (c) => {
-  const { toFid, sponsoredTransactionHash } = c.req.param();
-
-  return c.res({
-    image: `/image-share-by-user/${toFid}`,
-    intents: [
-      <Button.Link href={`https://optimistic.etherscan.io/tx/${sponsoredTransactionHash}`}>View on Explorer</Button.Link>,
+      <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
       <Button action='/'>Give it a try!</Button>,
     ],
   });
