@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "NodeNext",
+    "module": "ESNext",
     "skipLibCheck": true,
 
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
     "jsxImportSource": "frog/jsx",
 
-    /* Linting Comment */
+    /* Linting Section */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

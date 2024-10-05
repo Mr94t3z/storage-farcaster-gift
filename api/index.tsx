@@ -3,8 +3,8 @@ import { handle } from 'frog/vercel'
 import { neynar } from 'frog/middlewares'
 import { Box, Image, Text, VStack, Spacer, vars } from "../lib/ui.js";
 import { storageRegistry } from "../lib/contracts.js";
-import { createGlideClient, Chains, CurrenciesByChain } from "@paywithglide/glide-js";
-import { encodeFunctionData, hexToBigInt, toHex } from 'viem';
+import { createGlideConfig, chains, createSession, currencies, getSessionById, updatePaymentTransaction } from "@paywithglide/glide-js";
+import { hexToBigInt } from 'viem';
 import { Lum0x } from "lum0x-sdk";
 import dotenv from 'dotenv';
 
@@ -55,12 +55,15 @@ async function fetchUserData(fid: string) {
   return user;
 }
 
-export const glideClient = createGlideClient({
-  projectId: process.env.GLIDE_PROJECT_ID,
- 
-  // Lists the chains where payments will be accepted
-  chains: [Chains.Base, Chains.Optimism],
+export const glideConfig = createGlideConfig({
+  projectId: process.env.GLIDE_PROJECT_ID || '',
+
+  chains: [chains.base, chains.optimism],
 });
+
+type State = { 
+  glideSessionId?: string; 
+}; 
 
 const baseUrl = "https://warpcast.com/~/compose";
 const text = "FC Storage Gift 💾\n\nFrame by @0x94t3z.eth";
@@ -68,14 +71,23 @@ const embedUrl = "https://base.0x94t3z.tech/api/frame";
 
 const CAST_INTENS = `${baseUrl}?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`;
 
-export const app = new Frog({
+export const app = new Frog<{ State: State }>({
   assetsPath: '/',
   basePath: '/api/frame',
+  initialState: {},
   ui: { vars },
   browserLocation: CAST_INTENS,
-  title: "FC Storage Gift - Powered by Base Chain",
+  title: "FC Storage Gift - Powered by Base Network",
   headers: {
     'cache-control': 'no-store, no-cache, must-revalidate, proxy-revalidate max-age=0, s-maxage=0',
+  },
+  hub: {
+    apiUrl: "https://hubs.airstack.xyz",
+    fetchOptions: {
+      headers: {
+        "x-airstack-hubs": process.env.AIRSTACK_API_KEY || '',
+      }
+    }
   },
 }).use(
   neynar({
@@ -392,8 +404,6 @@ app.frame('/search-by-username', async (c) => {
       totalStorageLeft = totalStorageCapacity - totalStorageUsed;
     }
 
-    console.log("totalStorageLeft: ", totalStorageLeft);
-
     return c.res({
         image: (
           <Box
@@ -470,11 +480,32 @@ app.frame('/search-by-username', async (c) => {
 app.frame('/gift/:toFid', async (c) => {
   const { toFid } = c.req.param();
 
+  const units = 1n;
+  const price = await storageRegistry.read.price([units]);
+ 
+  await c.deriveState(async (state) => {
+    // Create a Glide session for rent Farcaster Storage
+    const { sessionId } = await createSession(glideConfig, {
+      // account: ethAddresses[0] as `0x${string}`,
+      paymentCurrency: currencies.eth.on(chains.base),
+ 
+      chainId: chains.optimism.id,
+      abi: storageRegistry.abi,
+      address: storageRegistry.address,
+      functionName: "rent",
+      args: [BigInt(toFid), units],
+      value: price,
+    });
+ 
+    // Store the Glide session ID in the state
+    state.glideSessionId = sessionId;
+  });
+
   try {
     return c.res({
       image: `/gift-image/${toFid}`,
       intents: [
-        <Button.Transaction target={`/tx-gift/${toFid}`} action={`/refresh-tx-status/${toFid}`}>Confirm</Button.Transaction>,
+        <Button.Transaction target={`/tx-gift`} action={`/tx-status/${toFid}`}>Confirm</Button.Transaction>,
         <Button action='/'>Cancel</Button>,
       ]
     })
@@ -550,7 +581,7 @@ app.image('/gift-image/:toFid', async (c) => {
   })
 })
 
-app.transaction('/tx-gift/:toFid', async (c, next) => {
+app.transaction('/tx-gift', async (c, next) => {
   await next();
   const txParams = await c.res.json();
   txParams.attribution = false;
@@ -562,137 +593,92 @@ app.transaction('/tx-gift/:toFid', async (c, next) => {
   });
 },
 async (c) => {
-  const { address } = c;
-  const { toFid } = c.req.param();
-
-  // Get current storage price
-  const units = 1n;
-  const price = await storageRegistry.read.price([units]);
-
-  const { unsignedTransaction } = await glideClient.createSession({
-    payerWalletAddress: address,
-   
-    // Optional. Setting this restricts the user to only
-    // pay with the specified currency.
-    paymentCurrency: CurrenciesByChain.BaseMainnet.ETH,
-    
-    transaction: {
-      chainId: Chains.Optimism.caip2,
-      to: storageRegistry.address,
-      value: toHex(price),
-      input: encodeFunctionData({
-        abi: storageRegistry.abi,
-        functionName: "rent",
-        args: [BigInt(toFid), units],
-      }),
-    },
-  });
+  const glideSessionId = c.previousState.glideSessionId;
+ 
+  if (!glideSessionId) {
+    throw new Error("No Glide session ID found.");
+  }
+ 
+  const { unsignedTransaction } = await getSessionById(
+    glideConfig,
+    glideSessionId,
+  );
 
   if (!unsignedTransaction) {
     throw new Error("missing unsigned transaction");
   }
 
+  console.log("unsignedTransaction: ", unsignedTransaction);
+
   return c.send({
-    chainId: Chains.Base.caip2,
+    chainId: `eip155:${chains.base.id}`,
     to: unsignedTransaction.to,
     data: unsignedTransaction.input || undefined,
     value: hexToBigInt(unsignedTransaction.value),
   });
 })
 
-app.frame("/refresh-tx-status/:toFid", async (c) => {
-  const { transactionId } = c;
+app.frame("/tx-status/:toFid", async (c) => {
+  const {
+    transactionId,
+    buttonValue,
+    previousState: { glideSessionId },
+  } = c;
   const { toFid } = c.req.param();
- 
-  return c.res({
-    image: '/waiting.gif',
-    intents: [
-      <Button action={`/tx-status/${transactionId}/${toFid}`}>
-        Refresh
-      </Button>,
-    ],
-  });
-});
-
-app.frame("/tx-status/:transactionId/:toFid", async (c) => {
-  const { buttonValue } = c;
-  const { transactionId, toFid } = c.req.param();
 
   // The payment transaction hash is passed with transactionId if the user just completed the payment. If the user hit the "Refresh" button, the transaction hash is passed with buttonValue.
   const txHash = transactionId || buttonValue;
-
-  console.log("buttonValue: ", buttonValue);
   
-  if (!txHash) {
+  if (!txHash || !glideSessionId) {
     return c.error({
-      message: "Missing transaction hash, please try again.",
+      message: "Missing payment transaction hash or Glide session ID",
     });
   }
+
+  // Update the Glide session with the payment transaction hash, if the user just completed the payment.
+  if (transactionId) {
+    await updatePaymentTransaction(glideConfig, {
+      sessionId: glideSessionId,
+      hash: transactionId,
+    });
+  }
+
+  const { sponsoredTransactionHash } = await getSessionById(glideConfig, glideSessionId);
 
   const user = await fetchUserData(toFid);
 
-  let session;
-
-  console.log("session: ", session);
-  try {
-    console.log("txHash: ", txHash);
-    
-    session = await glideClient.getSessionByPaymentTransaction({
-      chainId: Chains.Base.caip2,
-      txHash,
-    });
-
-    if (!session) {
-      throw new Error('Session not found');
-    }
-
-    // Wait for the session to complete
-    session = await glideClient.waitForSession(session.sessionId);
-  } catch (error) {
-    // Return with a refresh button if the session is not found or another error occurs
-    return c.res({
-      image: '/waiting.gif',
-      intents: [
-        <Button value={txHash} action={`/tx-status/${transactionId}/${toFid}`}>
-          Refresh
-        </Button>,
-      ],
-    });
-  }
-
   // Check if payment is successful
-  if (session.paymentStatus !== 'paid') {
+  if (!sponsoredTransactionHash) {
     return c.res({
       image: '/waiting.gif',
       intents: [
-        <Button value={txHash} action={`/tx-status/${transactionId}/${toFid}`}>
+        <Button value={txHash} action={`/tx-status/${toFid}`}>
           Refresh
         </Button>,
       ],
     });
   }
 
-  const completeTxHash = session.sponsoredTransactionHash;
   const shareText = `I just gifted 1 unit of storage to @${user.username} on @base !\n\nFrame by @0x94t3z.eth`;
-  const embedUrlByUser = `${embedUrl}/share-by-user/${toFid}/${completeTxHash}`;
+  const embedUrlByUser = `${embedUrl}/share-by-user/${toFid}/${sponsoredTransactionHash}`;
   const SHARE_BY_USER = `${baseUrl}?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(embedUrlByUser)}`;
 
   return c.res({
     image: `/image-share-by-user/${toFid}`,
     intents: [
-      <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
+      <Button.Link href={`https://optimistic.etherscan.io/tx/${sponsoredTransactionHash}`}>View on Explorer</Button.Link>,
       <Button.Link href={SHARE_BY_USER}>Share</Button.Link>,
     ],
   });
 });
 
-app.frame("/share-by-user/:toFid/:completeTxHash", async (c) => {
-  const { toFid, completeTxHash } = c.req.param();
+app.frame("/share-by-user/:toFid/:sponsoredTransactionHash", async (c) => {
+  const { toFid, sponsoredTransactionHash } = c.req.param();
 
   return c.res({
     image: `/image-share-by-user/${toFid}`,
     intents: [
-      <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
+      <Button.Link href={`https://optimistic.etherscan.io/tx/${sponsoredTransactionHash}`}>View on Explorer</Button.Link>,
       <Button action='/'>Give it a try!</Button>,
     ],
   });

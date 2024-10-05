@@ -27,6 +27,7 @@ A Farcaster Frame is used to locate the people you follow on Farcaster who have 
     GLIDE_PROJECT_ID = "YOUR_GLIDE_PROJECT_ID"
     NEYNAR_API_KEY = "YOUR_NEYNAR_API_KEY"
     LUM0X_API_KEY = "YOUR_LU0X_API_KEY"
+    AIRSTACK_API_KEY = "YOUR_AIRSTACK_API_KEY"
    ```
 
 ## Usage
