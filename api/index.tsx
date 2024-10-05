@@ -635,55 +635,44 @@ app.frame("/tx-status/:toFid", async (c) => {
         message: "Missing transaction hash, please try again.",
       });
     }
+    
+    // Check if the session is already completed
+    const { success } = await updatePaymentTransaction(glideConfig, {
+      sessionId: sessionId,
+      hash: txHash as `0x${string}`,
+    });
 
-    try {
-      // Check if the session is already completed
-      const { success } = await updatePaymentTransaction(glideConfig, {
-        sessionId: sessionId,
-        hash: txHash as `0x${string}`,
+    if (!success) {
+      throw new Error("failed to update payment transaction");
+    }
+
+    // Get the current session state
+    const session = await getSessionById(glideConfig, sessionId);
+
+    if (!session) {
+      throw new Error("Session not found");
+    }
+
+    console.log("Session: ", session);
+
+    // If the session has a sponsoredTransactionHash, it means the transaction is complete
+    if (session.sponsoredTransactionStatus === "success") {
+      const user = await fetchUserData(toFid);
+
+      const completeTxHash = session.sponsoredTransactionHash;
+      const shareText = `I just gifted 1 unit of storage to @${user.username} on @base !\n\nFrame by @0x94t3z.eth`;
+      const embedUrlByUser = `${embedUrl}/share-by-user/${toFid}/${completeTxHash}`;
+      const SHARE_BY_USER = `${baseUrl}?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(embedUrlByUser)}`;
+
+      return c.res({
+        image: `/image-share-by-user/${toFid}`,
+        intents: [
+          <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
+          <Button.Link href={SHARE_BY_USER}>Share</Button.Link>,
+        ],
       });
-
-      if (!success) {
-        throw new Error("failed to update payment transaction");
-      }
-
-      // Get the current session state
-      const session = await getSessionById(glideConfig, sessionId);
-
-      if (!session) {
-        throw new Error("Session not found");
-      }
-
-      // If the session has a sponsoredTransactionHash, it means the transaction is complete
-      if (session.sponsoredTransactionHash) {
-        const user = await fetchUserData(toFid);
-
-        const completeTxHash = session.sponsoredTransactionHash;
-        const shareText = `I just gifted 1 unit of storage to @${user.username} on @base !\n\nFrame by @0x94t3z.eth`;
-        const embedUrlByUser = `${embedUrl}/share-by-user/${toFid}/${completeTxHash}`;
-        const SHARE_BY_USER = `${baseUrl}?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(embedUrlByUser)}`;
-
-        return c.res({
-          image: `/image-share-by-user/${toFid}`,
-          intents: [
-            <Button.Link href={`https://optimistic.etherscan.io/tx/${completeTxHash}`}>View on Explorer</Button.Link>,
-            <Button.Link href={SHARE_BY_USER}>Share</Button.Link>,
-          ],
-        });
-      } else {
-        // If the session does not have a sponsoredTransactionHash, the payment is still pending
-        return c.res({
-          image: '/waiting.gif',
-          intents: [
-            <Button value={txHash} action={`/tx-status/${toFid}`}>
-              Refresh
-            </Button>,
-          ],
-        });
-      }
-    } catch (e) {
-      console.error("Error:", e);
-
+    } else {
+      // If the session does not have a sponsoredTransactionHash, the payment is still pending
       return c.res({
         image: '/waiting.gif',
         intents: [
@@ -693,7 +682,7 @@ app.frame("/tx-status/:toFid", async (c) => {
         ],
       });
     }
-  },
+  }
 );
 
 app.frame("/share-by-user/:toFid/:completeTxHash", async (c) => {
