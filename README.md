@@ -78,7 +78,7 @@ The contract are deployed at the following address:
 | StorageRegistry| [0x00000000fcCe7f938e7aE6D3c335bD6a1a7c593D](https://optimistic.etherscan.io/address/0x00000000fcce7f938e7ae6d3c335bd6a1a7c593d) |
 
 ## Demo
-Watch the demo on YouTube: [Storage Farcaster Gift Demo](https://youtu.be/qrBpwwsNNHM)
+Watch the demo on YouTube: [Storage Farcaster Gift Demo](https://youtu.be/3taIV2N2xIM)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
