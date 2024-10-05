@@ -629,9 +629,9 @@ app.frame("/tx-status/:toFid", async (c) => {
   const sessionId = glideSessionId as string;
 
   // The payment transaction hash is passed with transactionId if the user just completed the payment. If the user hit the "Refresh" button, the transaction hash is passed with buttonValue.
-  const txHash = transactionId || buttonValue;
+  const txHash = buttonValue || transactionId; // <---- order flipped
 
-  if (!txHash) {
+  if (!txHash || txHash === "0x") {
     return c.error({
       message: "Missing transaction hash, please try again.",
     });
@@ -639,7 +639,7 @@ app.frame("/tx-status/:toFid", async (c) => {
 
   try {
     // Only call updatePaymentTransaction if the user just completed the payment (i.e., transactionId is available)
-    if (transactionId) {
+    if (transactionId && transactionId.length > 2) {
       const { success } = await updatePaymentTransaction(glideConfig, {
         sessionId: sessionId,
         hash: transactionId as `0x${string}`,
