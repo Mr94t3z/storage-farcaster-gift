@@ -63,7 +63,7 @@ export const glideConfig = createGlideConfig({
 
 type State = { 
   glideSessionId?: string; 
-}; 
+};
 
 const baseUrl = "https://warpcast.com/~/compose";
 const text = "FC Storage Gift 💾\n\nFrame by @0x94t3z.eth";
@@ -487,7 +487,6 @@ app.frame('/gift/:toFid', async (c) => {
   await c.deriveState(async (state) => {
     // Create a Glide session for rent Farcaster Storage
     const { sessionId } = await createSession(glideConfig, {
-      // account: ethAddresses[0] as `0x${string}`,
       paymentCurrency: currencies.eth.on(chains.base),
  
       chainId: chains.optimism.id,
@@ -608,8 +607,6 @@ async (c) => {
   if (!unsignedTransaction) {
     throw new Error("missing unsigned transaction");
   }
-
-  console.log("unsignedTransaction: ", unsignedTransaction);
 
   return c.send({
     chainId: `eip155:${chains.base.id}`,
