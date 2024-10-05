@@ -280,6 +280,9 @@ app.frame('/show/:fid', async (c) => {
     const totalStorageLeft = displayData.length > 0 ? displayData[0].totalStorageLeft : null;
 
     return c.res({
+        headers: {
+          'cache-control': 'no-store, no-cache, must-revalidate, proxy-revalidate max-age=0, s-maxage=0',
+        },
         image: (
           <Box
             grow
