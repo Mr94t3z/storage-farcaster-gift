@@ -1,8 +1,22 @@
 import { Button, Frog, TextInput } from 'frog'
 import { handle } from 'frog/vercel'
-import { Box, Image, Text, VStack, Spacer, vars } from "../lib/ui.js";
+import { 
+  Box, 
+  Image, 
+  Text, 
+  VStack, 
+  Spacer, 
+  vars 
+} from "../lib/ui.js";
 import { storageRegistry } from "../lib/contracts.js";
-import { createGlideConfig, chains, createSession, currencies, getSessionById, updatePaymentTransaction } from "@paywithglide/glide-js";
+import { 
+  createGlideConfig, 
+  chains, 
+  createSession, 
+  currencies, 
+  getSessionById, 
+  updatePaymentTransaction 
+} from "@paywithglide/glide-js";
 import { hexToBigInt, toHex } from 'viem';
 import { Lum0x } from "lum0x-sdk";
 import dotenv from 'dotenv';

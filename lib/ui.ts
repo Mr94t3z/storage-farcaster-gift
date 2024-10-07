@@ -1,6 +1,13 @@
 import { createSystem } from "frog/ui";
 
-export const { Box, Columns, Column, Image, Heading, Text, VStack, Spacer, vars } = createSystem({
+export const { 
+  Box,
+  Image, 
+  Text, 
+  VStack, 
+  Spacer, 
+  vars 
+} = createSystem({
   colors: {
     white: "white",
     black: "rgb(10,9,13)",
