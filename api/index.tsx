@@ -1,6 +1,5 @@
 import { Button, Frog, TextInput } from 'frog'
 import { handle } from 'frog/vercel'
-import { neynar } from 'frog/middlewares'
 import { Box, Image, Text, VStack, Spacer, vars } from "../lib/ui.js";
 import { storageRegistry } from "../lib/contracts.js";
 import { createGlideConfig, chains, createSession, currencies, getSessionById, updatePaymentTransaction } from "@paywithglide/glide-js";
@@ -89,12 +88,7 @@ export const app = new Frog<{ State: State }>({
       }
     }
   },
-}).use(
-  neynar({
-    apiKey: process.env.NEYNAR_API_KEY || 'NEYNAR_FROG_FM',
-    features: ['interactor', 'cast'],
-  }),
-)
+})
 
 // Initialize total pages and current page
 const itemsPerPage = 1;
@@ -111,7 +105,8 @@ app.frame('/', (c) => {
 })
 
 app.frame('/dashboard', async (c) => {
-  const { fid } = c.var.interactor || {}
+  const { frameData } = c;
+  const { fid } = frameData as unknown as { buttonIndex?: number; fid?: string };
 
   try {
     return c.res({
