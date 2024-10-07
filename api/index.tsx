@@ -1,5 +1,5 @@
-import { Button, Frog, TextInput } from 'frog'
-import { handle } from 'frog/vercel'
+import { Button, Frog, TextInput } from 'frog';
+import { handle } from 'frog/vercel';
 import { 
   Box, 
   Image, 
