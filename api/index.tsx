@@ -370,7 +370,7 @@ app.frame('/show/:fid', async (c) => {
   } catch (error) {
     console.error('Unhandled error:', error);
     return c.error({
-      message: `${error}`,
+      message: `The server is under maintenance. Please try again later.`,
     });
   }
 });
@@ -482,7 +482,7 @@ app.frame('/search-by-username', async (c) => {
   } catch (error) {
     console.error('Unhandled error:', error);
     return c.error({
-      message: `${error}`,
+      message: `The server is under maintenance. Please try again later.`,
     });
   }
 });
