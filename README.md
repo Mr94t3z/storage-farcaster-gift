@@ -1,13 +1,11 @@
-# Storage Farcaster Gift
+# FC Storage Gift
 
 ## Description
 A Farcaster Frame is used to locate the people you follow on Farcaster who have low storage capacity, allowing you to gift them additional Farcaster Storage.
 
 ## Features
-- Fetch followers' storage data from the Neynar API.
-- Display followers' profiles and their remaining storage capacity.
-- Allow users to gift storage to selected followers.
-- Track the status of storage gifting transactions.
+- You can gift storage to users you follow who are low on Farcaster Storage.
+- You can also gift storage by searching for a specific username using the Search button.
 
 ## Installation
 1. Clone the repository:
@@ -40,10 +38,8 @@ A Farcaster Frame is used to locate the people you follow on Farcaster who have 
 ---
 
 ## Technologies Used
-- **Node.js**: JavaScript runtime for building server-side applications.
-- **Frog**: A minimal and lightweight framework for Farcaster Frames.
-- **Lum0x**: A computation layer for Farcaster that empowers key contributors.
-- **Neynar**: API service for interacting with Farcaster.
+- **Frog.fm**: A minimal and lightweight framework for Farcaster Frames.
+- **Lum0x**: API service for interacting with Farcaster.
 - **Glide**: Payment integration and API service.
 - **Airstack**: Provides an easy-to-use Validation API to validate your Frames signature packet in your Farcaster Frames.
 - **Vercel**: Platform for deploying and hosting web applications.
