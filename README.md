@@ -58,9 +58,6 @@ Sign up for an API key to start using Lum0x: [Get Lum0x API Key](https://buildat
 ### Getting Started with Glide
 Sign up for an API key for Glide: [Get Glide API Key](https://paywithglide.xyz/)
 
-### Neynar API Reference
-Explore the Neynar API reference here: [Neynar API Documentation](https://docs.neynar.com/reference/neynar-farcaster-api-overview)
-
 ### About Frog
 The Storage Farcaster Gift project utilizes Frog, a minimal and lightweight framework specifically designed for Farcaster Frames. Learn more about Frog: [Frog Framework](https://frog.fm/)
 
